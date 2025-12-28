@@ -1,0 +1,12 @@
+{% extends 'base.html'%}
+
+{% block body %}
+
+<div class = "error-container">
+    <h1>Security Error</h1>
+    <p>{{reason}}</p>
+    <p>Please go back and try again.</p>
+    <a href = "{{url_for('home')}}">Return home</a>
+</div>
+
+{% endblock %}

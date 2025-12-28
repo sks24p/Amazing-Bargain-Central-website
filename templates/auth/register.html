@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class = "container">
+    <h1>Sign up!</h1>
+    <form action = "{{url_for('auth.register')}}" method = "POST" id = "register-form">
+        {# Attach hidden input to insert csrf token inside form #}
+        <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
+
+        <label>Email:</label>
+        <input type = "email" name = "email" placeholder = "Email" class = "input-field" required>
+        <br>
+
+        <label>Password:</label>
+        <input type = "password" name = "password" placeholder = "Password" class = "input-field" required>
+        <br>
+
+        <label>Name:</label>
+        <input type = "text" name = "name" placeholder = "Name" class = "input-field" required>
+        <br>
+        
+        <label>Address: </label>
+        <input type = "text" name = "address" placeholder = "Address" class = "input-field" required>
+        <br>
+
+        <button type = "submit">Register</button>
+        <br>
+        <a href = "{{url_for('auth.login')}}">Already a user? Login!</a>
+    </form>
+</div>
+{% endblock %}

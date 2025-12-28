@@ -1,11 +1,16 @@
-from app import db
 from sqlalchemy import func
+from flask_login import UserMixin
+from flask_sqlalchemy import SQLAlchemy
 
-class Users(db.Model):
+# Create the SQLAlchemy database instance
+db = SQLAlchemy()
+
+class Users(db.Model, UserMixin):
     __tablename__ = 'users'
     # Columns
     id = db.Column(db.Integer, primary_key = True)
     email = db.Column(db.String(120), unique = True, nullable = False)
+    name = db.Column(db.String(100), nullable = False)
     password_hash = db.Column(db.String(128), nullable = False)
     role = db.Column(db.String(20), default = "customer") 
     address = db.Column(db.String(200), nullable = False)

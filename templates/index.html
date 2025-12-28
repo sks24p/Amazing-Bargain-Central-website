@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Home - Amazing Bargain Central
+{% endblock %}
+
+{% block body %}
+<div class = "container">
+    <h1>Welcome to Amazing Bargain Central!</h1>
+    <p>The store where you can find anything you are looking for!</p>
+
+    {% if current_user.is_authenticated %}
+        <p>Hello, {{current_user.name}}! Browse our products below.</p>
+    {% else %}
+        <a href = "{{url_for('auth.login')}}">Sign in to purchase products!</a>
+    {% endif %}
+
+    <h2>Featured Products</h2>
+    <p><span>Product listings coming soon...</span></p>
+</div>
+{% endblock %}

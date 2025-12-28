@@ -1,0 +1,13 @@
+# Database
+*.db
+
+# Virtual environment
+venv/
+
+# Python cache
+*.pyc
+*.pyo
+*.pyd
+
+# Notes for account details
+notes for account details for users.txt
