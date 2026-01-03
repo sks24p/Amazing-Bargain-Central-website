@@ -93,8 +93,26 @@ def register():
     return render_template("auth/register.html")              
 
 # Account page
-@auth_bp.route('/account')
+@auth_bp.route("/account", methods = ["GET"])
 @login_required
 def account():
     """User account page - requires login """
     return render_template("auth/account.html")
+
+# Upgrade to seller page
+@auth_bp.route("/upgrade_to_seller", methods = ['POST'])
+@login_required
+def upgrade_to_seller():
+    if current_user.role == "customer":
+        # Update role to seller
+        current_user.role = "seller"
+        db.session.commit()
+        # redirect user to account page
+        flash("You are now a seller!", category='success')
+        return redirect(url_for('auth.account'))
+        # Dashboard page is unlocked for user and you can view it at the nav bar
+    elif current_user.role in ['seller', 'admin']:
+        flash(f"You are a {current_user.role}", category='info')
+        return redirect(url_for('auth.account'))
+    else:
+        abort(403)

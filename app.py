@@ -1,23 +1,31 @@
-from flask import Flask, Blueprint, render_template, redirect, url_for, flash
+from flask import Flask, render_template, redirect, url_for, flash
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
+from blueprints import admin
 from config import Config
 from models import db, Users, Products, Orders, Order_Items, Reviews
 from flask_login import LoginManager
-
-# Import blueprints
-from blueprints.auth import auth_bp
-
 
 # Create app instance
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Import blueprints
+from blueprints.auth import auth_bp
+from blueprints.admin import admin_bp
+from blueprints.seller import seller_bp
+
+# Register blueprints
+app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp, url_prefix = "/admin")
+app.register_blueprint(seller_bp, url_prefix = "/seller")
+
+
 # Initialise extensions
 db.init_app(app)
 csrf = CSRFProtect(app)
  
-# Flask_login configuration 
+# Flask-login configuration 
 login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'
 login_manager.login_message = " Please log in to access this page."
@@ -26,11 +34,7 @@ login_manager.login_message_category = "info"
 # Create all tables
 with app.app_context():
     db.create_all()
-    print("Database tables created!")
-
-# Register blueprints
-app.register_blueprint(auth_bp)
-
+    print("Database tables have been created!")
 
 # Load up a user for a query
 @login_manager.user_loader
@@ -41,6 +45,16 @@ def load_user(user_id):
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     return render_template('auth/csrf_error.html', reason = e.description), 400
+
+# Error handling
+
+@app.errorhandler(403)
+def forbidden(error):
+    return render_template("errors/403.html"), 403
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template("errors/404.html"), 404
 
 # Routes
 @app.route("/home")

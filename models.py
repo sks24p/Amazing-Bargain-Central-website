@@ -15,7 +15,10 @@ class Users(db.Model, UserMixin):
     role = db.Column(db.String(20), default = "customer") 
     address = db.Column(db.String(200), nullable = False)
     created_at = db.Column(db.DateTime, default = func.now())
-
+    # Constraints
+    __table_args__ = (
+        db.CheckConstraint("role IN ('customer', 'seller', 'admin')", name = 'check_role'),
+    )
     # Relationships
     products = db.relationship('Products', back_populates='seller', lazy = True)
     orders = db.relationship('Orders', back_populates='user', lazy = True)

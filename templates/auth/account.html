@@ -1,19 +1,31 @@
 {% extends 'base.html' %}
 
-{% block title %}My Account - Amazing Bargain Central{% endblock %}
+{% block title %}My Account{% endblock %}
 
 {% block body %}
 <div class = "container">
-    <h1>My Account</h1>
+    <h1>Customer Dashboard</h1>
    
     <div class = "account-info">
-        <h2>Account Details</h2>
+        <h2>My Account Details</h2>
         <p><strong>Name:</strong> {{current_user.name}}</p>
         <p><strong>Email:</strong> {{current_user.email}}</p>
         <p><strong>Role:</strong> {{current_user.role}}</p>
         <p><strong>Address:</strong> {{current_user.address}}</p>
         <p><strong>Member since:</strong> {{current_user.created_at.strftime('%B %d, %Y')}}</p>
     </div>
+
+    {% if current_user.role == "customer"%}
+        <h2>Want to sell products?</h2>
+        <p>Upgrade your account to become a seller.</p>
+        <form method = "POST", action = "{{ url_for('auth.upgrade_to_seller')}}">
+            {# Attach hidden input to insert csrf token inside form #}
+            <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
+            <button type = "submit">Upgrade to Seller</button>
+        </form>
+    {% endif %}
+
+    <h2>Order history coming soon!</h2>
 
     <div class = "account-actions">
         <h2>Quick links</h2>
