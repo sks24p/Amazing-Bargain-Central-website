@@ -1,0 +1,21 @@
+{% extends 'base.html '%}
+
+{% block title %} Product Details{% endblock %}
+
+{% block body %}
+    {# Display thumbnail #}
+    <img alt = "Product Image" src = "{{product.image_url}}">
+    {# Product name #}
+    <h1>{{product.name}}</h1>
+    {# Product price #}
+    <h3>{{product.price}}</h3>
+    {# Product seller (uses relationship) #}
+    <h3>{{product.seller.name}}</h3>
+    {# Product description #}
+    <p>{{product.description}}</p>
+
+
+
+    <a>Buy Now</a>
+
+{% endblock%}

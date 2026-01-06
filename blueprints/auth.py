@@ -54,42 +54,45 @@ def register():
         password = request.form.get('password')
         name = request.form.get('name')
         address = request.form.get('address')
-        # Check if email exists
-        email_exists = Users.query.filter_by(email = email).first()
+
         # Validate data
-        if email_exists:
-            flash("Email is already in use.", category = "error")
-        elif not all([email, password, name, address]):
+        if not all([email, password, name, address]):
             flash("All fields are required.", category = "error")
-        elif len(email) > 120:
-            flash("Email is too long (max 120 characters)", category = "error")
-        elif len(name) > 100:
-            flash("Name is too long (max 100 characters)", category = "error")
-        elif len(password) < 8:
-            flash("Password must be at least 8 characters", category = "error")
-        elif not any(c.isupper() for c in password):
-            flash("Password must contain at least one uppercase letter", category = "error")
-        elif not any(c.isdigit() for c in password):
-            flash("Password must contain at least one number", category = "error")
-        elif '@' not in email:
-            flash("Invalid email format", category = "error")
-        elif len(address) > 200:
-            flash("Address is too long (max 200 characters)", category="error") 
-        elif any(character in email for character in ['<', '>', '"', "'"]):
-            flash("Email contains invalid characters", category = "error")
         else:
-            # All validation passed - so create user
-            new_user = Users(
-                email = email,
-                password_hash = bcrypt.generate_password_hash(password).decode('utf-8'),
-                name = name,
-                address = address)  
-            db.session.add(new_user)
-            db.session.commit()
-            # Log the user in immediately
-            login_user(new_user, remember = False)
-            flash("User created!", category = "success")
-            return redirect(url_for('home'))
+            # Check if email exists
+            email_exists = Users.query.filter_by(email = email).first()
+            # Validate data
+            if email_exists:
+                flash("Email is already in use.", category = "error")
+            elif len(email) > 120:
+                flash("Email is too long (max 120 characters)", category = "error")
+            elif len(name) > 100:
+                flash("Name is too long (max 100 characters)", category = "error")
+            elif len(password) < 8:
+                flash("Password must be at least 8 characters", category = "error")
+            elif not any(c.isupper() for c in password):
+                flash("Password must contain at least one uppercase letter", category = "error")
+            elif not any(c.isdigit() for c in password):
+                flash("Password must contain at least one number", category = "error")
+            elif '@' not in email:
+                flash("Invalid email format", category = "error")
+            elif len(address) > 200:
+                flash("Address is too long (max 200 characters)", category="error") 
+            elif any(character in email for character in ['<', '>', '"', "'"]):
+                flash("Email contains invalid characters", category = "error")
+            else:
+                # All validation passed - so create user
+                new_user = Users(
+                    email = email,
+                    password_hash = bcrypt.generate_password_hash(password).decode('utf-8'),
+                    name = name,
+                    address = address)  
+                db.session.add(new_user)
+                db.session.commit()
+                # Log the user in immediately
+                login_user(new_user, remember = False)
+                flash("User created!", category = "success")
+                return redirect(url_for('home'))
     return render_template("auth/register.html")              
 
 # Account page

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class = "container">
+    <h1>Add a product!</h1>
+    <form action = "{{url_for('seller.add_product')}}" method = "POST" id = "add_product-form">
+        {# Attach hidden input to insert csrf token inside form #}
+        <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
+
+        <label>Name:</label>
+        <input type = "text" name = "name" placeholder = "Name" class = "input-field" required>
+        <br>
+
+        <label>Description:</label>
+        <input type = "text" name = "description" placeholder = "Description" class = "input-field" required>
+        <br>
+
+        <label>Price:</label>
+        <input type = "number" name = "price" placeholder = "Price" class = "input-field" step = "0.01" min = "0.01" required>
+        <br>
+        
+        <label>Image Url:</label>
+        <input type = "url" name = "image_url" placeholder = "Image Url" class = "input-field" required>
+        <br>
+
+        <button type = "submit">Add product</button>
+    </form>
+</div>
+{% endblock %}

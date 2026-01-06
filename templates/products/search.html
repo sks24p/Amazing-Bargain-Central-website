@@ -1,9 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}
-Home - Amazing Bargain Central
-{% endblock %}
-
+{% block title %}Search Results{% endblock %}
 
 {% block body %}
 <div class = "container">
@@ -12,23 +9,24 @@ Home - Amazing Bargain Central
 
     {# Search bar #}
     <form action = "{{ url_for('products.search') }}" method = "GET">
-        <input type = "text" name = "query" placeholder = "Search products...">
+        <input type = "text" name = "query" placeholder = "Search products..." value = "{{query}}">
         <button type = "submit">Search</button>
     </form>
-    <br>
 
-    {# Basically put this up top for the user to see. They can still browse products without logging in #}
-    {% if current_user.is_authenticated %}
-        <p>Hello, {{current_user.name}}! Browse our products below.</p>
-    {% else %}
-        <a href = "{{url_for('auth.login')}}">Sign in to purchase products!</a>
-    {% endif %}
-
+    <p>Search results for {{query}}</p>
 
     <h2>Featured Products</h2>
     {% if products %}
+        {% if products|length == 1 %}
+            <p>Found {{products|length}} product</p>
+        {% endif %}
+        {% if products|length > 1 %}
+            <p>Found {{products|length}} products</p>
+        {% endif %}
+
         <div class = "product_container">
             {% for product in products %}
+                {# The <a></a> tag covers the container so that you can click anywhere in a product card to access its product details #}
                 <a href = "{{url_for('products.product_detail', product_id = product.id)}}" class = "product_card_link">
                     <div class = "product_card">
                         {# Display thumbnail (fit to resolution of card container) #}
@@ -42,8 +40,9 @@ Home - Amazing Bargain Central
             {% endfor %}
         </div>
     {% else %}
-        <p>Sorry, currently there are no products available yet.</p>
+        <p>No products found matching: {{query}}</p>
+        <p><a href = "{{url_for('home')}}">Back to Home</a></p>
     {% endif %}
-
 </div>
+
 {% endblock %}
