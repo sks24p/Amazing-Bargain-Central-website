@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Order detail{% endblock %}
+
+{% block body %}
+<div class = "container">
+    <p><strong>Order number:</strong> {{order.id}}</p>
+    <p><strong>Date ordered:</strong> {{order.created_at}}</p>
+    <p><strong>Order status:</strong> {{order.status}}</p>
+    <p><strong>Delivery address:</strong> {{order.delivery_address}}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>    
+        <tbody>
+            {% for item in order_items %}
+                <tr>
+                    <td>{{item.product.name}}</td>
+                    <td>{{item.quantity}}</td>                
+                    <td>{{item.product_price_at_purchase}}</td>                
+                    <td>{{item.quantity * item.product_price_at_purchase}}</td>                
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan = "3" style = "text-align: right;"><strong>Total:</strong></td>
+                <td><strong>{{order.total_price}}</strong></td>
+                {# <td></td> #}
+            </tr>
+        </tfoot>
+    
+    </table>
+
+    <a href = "{{url_for('auth.account')}}">Back to Account</a>
+    <a href = "{{url_for('home')}}">Continue shopping</a>
+
+</div>
+{% endblock %}

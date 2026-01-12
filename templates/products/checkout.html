@@ -1,0 +1,53 @@
+{% extends 'base.html '%}
+
+{% block title %}Checkout{% endblock %}
+
+{% block body %} 
+
+<div class = "container">
+    <h1>Checkout</h1>
+    {% if all_cart_items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Product</th>             
+                    <th>Price</th>                
+                    <th>Quantity</th>                
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in all_cart_items %}
+                    <tr>
+                        <td>
+                            <img src = "{{item.product.image_url}}" alt = "{{item.product.name}}" width = "100">
+                        </td>
+                        <td>{{item.product.name}}</td>
+                        <td>{{item.product.price}}</td>
+                        <td>{{item.quantity}}</td>
+                        <td>{{item.quantity * item.product.price}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan = "3" style = "text-align: right;"><strong>Total:</strong></td>
+                    <td><strong>{{grand_total}}</strong></td>
+                    {# <td></td> #}
+                </tr>
+            </tfoot>
+        </table>
+    {% endif %}
+    <br>
+    <form action = "{{url_for('products.place_order')}}" method = "POST">
+        {# CSRF protection #}
+        <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
+
+        <label>Delivery Address: </label>
+        <input type = "text" name = "delivery_address" value = "{{current_user.address}}" class = "input-field" required>
+        <button type = "submit">Place Order</button>
+    </form>
+
+</div>
+{% endblock %}

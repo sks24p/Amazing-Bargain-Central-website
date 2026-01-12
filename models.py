@@ -1,5 +1,5 @@
 from sqlalchemy import func
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from flask_sqlalchemy import SQLAlchemy
 
 # Create the SQLAlchemy database instance
@@ -23,6 +23,7 @@ class Users(db.Model, UserMixin):
     products = db.relationship('Products', back_populates='seller', lazy = True)
     orders = db.relationship('Orders', back_populates='user', lazy = True)
     reviews = db.relationship('Reviews', back_populates='user', lazy = True)
+    cart_items = db.relationship('Cart_Items', back_populates = 'user', lazy = True )
 
 class Products(db.Model):
     __tablename__ = 'products'
@@ -43,6 +44,22 @@ class Products(db.Model):
     seller = db.relationship('Users', back_populates='products', lazy = True)
     order_items = db.relationship('Order_Items', back_populates='product', lazy = True)
     reviews = db.relationship('Reviews', back_populates='product', lazy = True)
+    cart_items = db.relationship('Cart_Items', back_populates = 'product')
+
+class Cart_Items(db.Model):
+    __tablename__ = "cart_items"
+    # Columns
+    id = db.Column(db.Integer, primary_key = True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable = False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable = False)
+    quantity = db.Column(db.Integer, nullable = False)
+    added_at = db.Column(db.DateTime, default = func.now())
+    # Constraints
+    db.CheckConstraint('quantity < 0', name = 'check_cart_item_quantity')
+    # Relationships
+    user = db.relationship('Users', back_populates = 'cart_items', lazy = True)
+    product = db.relationship('Products', back_populates = "cart_items")
+
 
 class Orders(db.Model):
     __tablename__ = 'orders'
@@ -50,8 +67,9 @@ class Orders(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable = False)
     total_price = db.Column(db.Float, nullable = False)
-    status = db.Column(db.String(20), default = "Processing")
+    status = db.Column(db.String(20), default = "pending", nullable = False)
     created_at = db.Column(db.DateTime, default = func.now())
+    delivery_address = db.Column(db.String(150), nullable = False)
     # Constraints
     __table_args__ = (
         db.CheckConstraint('total_price >= 0.00', name='check_total_price'),
@@ -67,10 +85,10 @@ class Order_Items(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable = False)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable = False)
     quantity = db.Column(db.Integer, nullable = False, default = 1)
-    price_at_purchase = db.Column(db.Float, nullable = False)
+    product_price_at_purchase = db.Column(db.Float, nullable = False)
     # Constraints
     __table_args__ = (
-        db.CheckConstraint('quantity > 0', name='check_quantity'),
+        db.CheckConstraint('quantity > 0', name='check_order_quantity'),
     )
     # Relationships
     order = db.relationship('Orders', back_populates = 'order_items', lazy = True)
@@ -87,7 +105,7 @@ class Reviews(db.Model):
     created_at = db.Column(db.DateTime, default = func.now())
     # Constraints
     __table_args__ = (
-        db.CheckConstraint('rating >= 1 AND rating <= 5', name='check_rating'),
+        db.CheckConstraint('rating >= 1 AND rating <= 5', name='check_review_rating'),
     )
     # Relationships
     user = db.relationship('Users', back_populates = 'reviews', lazy = True)

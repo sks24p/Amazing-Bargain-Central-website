@@ -1,0 +1,72 @@
+{% extends 'base.html '%}
+
+{% block title %}Shopping Cart{% endblock %}
+
+{% block body %} 
+
+<div class = "container">
+    <h1>Shopping Cart</h1>
+    {% if cart_items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Product</th>             
+                    <th>Price</th>                
+                    <th>Quantity</th>                
+                    <th>Subtotal</th>
+                    <th>Actions</th>                
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                    <tr>
+                        <td onclick="window.location='{{url_for('products.product_detail', product_id = item.product.id)}}';" style="cursor:pointer;">
+                            <img src = "{{item.product.image_url}}" alt = "{{item.product.name}}" width = "100">
+                        </td>
+                        <td>{{item.product.name}}</td>
+                        <td>{{item.product.price}}</td>
+                        <td>
+                            {# Quantity - includes the ability to update it #}
+                            <form action = "{{url_for('products.update_cart_item', cart_item_id = item.id)}}" method = "POST" style = "display:inline;">
+                                {# CSRF protection #}
+                                <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
+
+                                <input type = "number" name = "quantity" value = "{{item.quantity}}" min = "1"  style = "width: 60px;">
+                                <button type = "submit">Update</button>
+                            </form>
+                        </td>
+                        <td>{{item.quantity * item.product.price}}</td>
+                        <td> 
+                            {# Remove cart item #}
+                            <form action = "{{url_for('products.remove_from_cart', cart_item_id = item.id)}}" method = "POST">
+                                {# CSRF protection #}
+                                <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
+
+                                <button type = "submit">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan = "4" style = "text-align: right;"><strong>Total:</strong></td>
+                    <td><strong>{{cart_total}}</strong></td>
+                    {# <td></td> #}
+                </tr>
+            </tfoot>
+        </table>
+    {% else %}
+        <p>You have no items in your cart.</p>
+        <a href = "{{url_for('home')}}">Continue Shopping</a>
+    {% endif %}
+    <br>
+    {# Go to checkout #}
+    <a href = "{{url_for('products.checkout')}}">Proceed to Checkout</a>
+</div>
+
+
+
+
+{% endblock %}

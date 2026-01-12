@@ -1,7 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
-from blueprints import admin
 from config import Config
 from models import db, Users, Products, Orders, Order_Items, Reviews
 from flask_login import LoginManager
