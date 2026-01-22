@@ -15,6 +15,11 @@ class Config:
     # CSRF Protection
     WTF_CSRF_ENABLED = True
 
+    # File upload security
+    UPLOAD_FOLDER_REVIEWS = Path('static/uploads/reviews')
+    UPLOAD_FOLDER_PRODUCTS = Path('static/uploads/products')
+    MAX_FILE_SIZE = 5 * 1024 * 1024
+
     # Session cookies (essential for security)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SECURE = False

@@ -4,6 +4,9 @@
 # Virtual environment
 venv/
 
+# Static files
+static/uploads
+
 # Python cache
 *.pyc
 *.pyo

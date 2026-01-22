@@ -1,18 +1,22 @@
+from multiprocessing import Value
+from tkinter import ALL
 from flask_login import current_user, login_required
-from flask import abort, Blueprint, flash, render_template, request, url_for, redirect
-from models import Products, Cart_Items, db, Orders, Order_Items
+from flask import abort, Blueprint, flash, render_template, request, url_for, redirect, current_app
+from models import Products, Cart_Items, db, Orders, Order_Items, Reviews
+from security import File_Security as FS, Data_Security as DS
+from pathlib import Path
+import markdown, bleach
 
 # Creating Blueprint
 product_bp = Blueprint('products', __name__)
-
 
 # Routes
 @product_bp.route("/product/<int:product_id>")
 def product_detail(product_id):
     """Gather a particular product with associated reviews to pass into the product details page"""
     product = Products.query.get_or_404(product_id)
-    # Will include reviews here later once functionality created
-    return render_template("products/detail.html", product = product)
+    reviews = Reviews.query.filter_by(product_id = product_id).all()
+    return render_template("products/detail.html", product = product, reviews = reviews)
 
 @product_bp.route("/search", methods = ['GET'])
 def search():
@@ -204,3 +208,117 @@ def order_detail(order_id):
     if order.user_id != current_user.id:
         abort(403)
     return render_template('order/detail.html', order = order, order_items = order_items)
+
+    
+@product_bp.route("/product/<int:product_id>/review", methods = ["POST"])
+@login_required
+def submit_review(product_id):
+    if request.method == "POST":
+        rating_str = request.form.get("rating")
+        comment = request.form.get("comment")
+        max_comment_length = 1000
+        try:
+            rating = int(rating_str)
+        except (ValueError, TypeError):
+            flash("Invalid input. Please try again.", category = "error")
+            return redirect(url_for("products.product_detail", product_id = product_id))
+        
+        # Check for empty fields
+        if not rating:
+            flash("Please submit a value from the provided options.", category = "error")
+            return redirect(url_for("products.product_detail", product_id = product_id))
+        if not comment or not comment.strip():
+            flash("Review comment cannot be empty.", category = "error")
+            return redirect(url_for("products.product_detail", product_id = product_id))
+        
+        # Check if rating value is not between 1 and 5
+        if rating < 1 or rating > 5:
+            flash("Choose a rating between 1-5.", category = "error")
+            return redirect(url_for("products.product_detail", product_id = product_id))
+        
+        # Check if user purchased product
+        purchase_exists = db.session.query(Orders, Order_Items).join(
+            Order_Items, Orders.id == Order_Items.order_id
+        ).filter(Orders.user_id == current_user.id,
+                 Order_Items.product_id == product_id).first()
+        if not purchase_exists: 
+            flash("You must purchase this product to review it.", category = "error")
+            return redirect(url_for("products.product_detail", product_id = product_id))
+                            
+        # Check for duplicate reviews
+        existing_review = Reviews.query.filter_by(
+            user_id = current_user.id,
+            product_id = product_id
+        ).first()
+        if existing_review:
+            flash("Multiple reviews for this product are not allowed. Only 1.", category = "error")
+            return redirect(url_for("products.product_detail", product_id = product_id))
+
+        # Check if comment exceeds 1000 characters
+        if len(comment) > max_comment_length:
+            flash(f"Reviews cannot exceed {max_comment_length} characters. Please try again.", category = "error")
+            return redirect(url_for("products.product_detail", product_id = product_id))
+        
+        # Sanitising comment and converting it to markdown format
+        cleaned_comment = DS.sanitise_text_to_markdown(comment)
+
+        # Validating image file
+        image = request.files.get("review_image")
+        image_path = None
+        if image and image.filename:
+            try:
+                # Check if the file extension is valid
+                FS.check_image_extension(image.filename)
+                # Read file content (needed to check size and magic bytes)
+                file_content = image.read()
+                # Check if the file size exceeds the limit (5 MB in this case)
+                file_size = len(file_content)
+                FS.check_image_size(file_size)
+                # Validate using magic bytes
+                FS.check_image_type(file_content)
+                # Sanitise and generate new secure file name
+                secure_filename = FS.generate_secure_image_name(image.filename)
+                # Save path
+                saved_path = current_app.config["UPLOAD_FOLDER_REVIEWS"] / secure_filename
+                saved_path.parent.mkdir(parents = True, exist_ok = True)
+                # Reset file pointer, after examining size and magic bytes, and save to disc
+                image.seek(0)
+                image.save(saved_path)
+                # Store relative path for database
+                image_path = f"uploads/reviews/{secure_filename}"                
+            except ValueError as e:
+                flash(str(e), category="error")
+                return redirect(url_for("products.product_detail", product_id=product_id))
+            except Exception as e:
+                print(f"Error saving file: {e}")
+                flash("Error uploading image. Please try again.", category = "error")
+                return redirect(url_for("products.product_detail", product_id=product_id))
+        new_review = Reviews(
+            user_id = current_user.id,
+            product_id = product_id,
+            rating = rating,
+            comment = cleaned_comment,
+            image_path = image_path
+        )
+        db.session.add(new_review)
+        db.session.commit()
+        flash("Review submitted!", category = "success")
+        return redirect(url_for("products.product_detail", product_id = product_id))
+
+@product_bp.route("/product/<int:product_id>/review/remove", methods = ["POST"])
+@login_required
+def remove_review(product_id):
+    """ Remove a review"""
+    if request.method == 'POST':
+        review = Reviews.query.filter_by(user_id = current_user.id, product_id = product_id).first()
+        if review:
+            db.session.delete(review)
+            db.session.commit()
+            file_path = Path(f"{review.image_path}")
+            file_path.unlink(missing_ok=True)   
+        
+            flash("Review removed!", category = "info")
+            return redirect(url_for('products.product_detail', product_id = product_id))
+        else:
+            flash("Review not found or you don't have permission to delete it.", category="error")
+            return redirect(url_for('products.product_detail', product_id=product_id))

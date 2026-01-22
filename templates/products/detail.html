@@ -4,15 +4,15 @@
 
 {% block body %}
     {# Display thumbnail #}
-    <img alt = "Product Image" src = "{{product.image_url}}">
+    <img alt = "Product Image" src = "{{url_for('static', filename = product.image_path)}}">
     {# Product name #}
     <h1>{{product.name}}</h1>
     {# Product price #}
-    <h3>{{product.price}}</h3>
+    <h4>{{product.price}}</h4>
     {# Product seller (uses relationship) #}
-    <h3>{{product.seller.name}}</h3>
+    <h4>{{product.seller.name}}</h4>
     {# Product description #}
-    <p>{{product.description}}</p>
+    <p>{{product.description|safe}}</p>    
 
     <form action = "{{url_for('products.add_to_cart', product_id = product.id)}}" method = "POST">
         {# Attach hidden input to insert csrf token inside form #}
@@ -22,5 +22,54 @@
         <input type = "number" min = "1" name = "quantity" value = "1" class = "input-field" required>
         <button type = "submit" >Add to Cart</button>
     </form>
+
+    {# Reviews section #}
+    <h2>Reviews</h2>
+    {% if current_user.is_authenticated %}
+        <form action = "{{url_for('products.submit_review', product_id = product.id)}}" method = "POST" enctype = "multipart/form-data">
+            {# CSRF protection #}
+            <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
+            {# Rating #}
+            <label for = "review_rating">Review rating</label>
+            <select class = "dropdown" id = 'review_rating' name = "rating" required>
+                <option value = "1">1</option>
+                <option value = "2">2</option>
+                <option value = "3">3</option>
+                <option value = "4">4</option>
+                <option value = "5">5</option>
+            </select>
+            {# Raw review #}
+            <label for = "comment">Review: </label>
+            <small>Markdown supported: **bold**, *italic*, - lists, # headings</small>
+            <textarea name = "comment" id = "comment" required></textarea>
+            {# Review image upload (optional) #}
+            <label for = "">Upload Image (optional)</label>
+            <input type = "file" name = "review_image" accept = "image/*" >
+
+            <button type = "submit">Submit review</button>
+        </form>
+        <br>
+    {% endif %}
+    {% if reviews %}
+        {% for review in reviews %}
+            <h4>{{review.user.name}}</h4>
+            <p><strong>Rating:</strong> {{review.rating}} / 5</p>
+            <p><strong>Date:</strong> {{review.created_at.strftime("%d-%m-%Y")}}</p>
+            {% if review.image_path%}
+                <img alt = "user's review image" src = "{{url_for('static', filename = review.image_path)}}">
+            {% endif %}
+            <p>{{review.comment|safe}}</p>
+            {% if review.user_id == current_user.id %}
+                {# Remove review #}
+                <form action = "{{url_for('products.remove_review', product_id = product.id)}}" method = "POST">
+                    {# CSRF protection #}
+                    <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
+                    <button type="submit" onclick="return confirm('Delete this review?')">Delete Review</button>
+                </form>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <p>No reviews yet. Why not be the first to try?</p>
+    {% endif %}
 
 {% endblock%}

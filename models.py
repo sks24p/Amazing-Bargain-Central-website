@@ -32,7 +32,7 @@ class Products(db.Model):
     name = db.Column(db.String(200), unique = True, nullable = False)
     description = db.Column(db.Text, nullable = False)
     price = db.Column(db.Float, nullable = False)
-    image_url = db.Column(db.String(150), nullable = False)
+    image_path = db.Column(db.String(150), nullable = False)
     seller_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable = False)
     created_at = db.Column(db.DateTime, default = func.now())
     updated_at = db.Column(db.DateTime, default = func.now(), onupdate = func.now())
@@ -102,6 +102,7 @@ class Reviews(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable = False)
     rating = db.Column(db.Integer, nullable = False)
     comment = db.Column(db.Text, nullable = False)
+    image_path = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default = func.now())
     # Constraints
     __table_args__ = (
