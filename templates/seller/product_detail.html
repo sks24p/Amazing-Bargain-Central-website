@@ -1,0 +1,20 @@
+{% extends 'base.html '%}
+
+{% block title %} Product Details{% endblock %}
+
+{% block body %}
+    {# Display thumbnail #}
+    <img alt = "Product Image" src = "{{url_for('static', filename = product.image_path)}}">
+    {# Product name #}
+    <h1>{{product.name}}</h1>
+    {# Product price #}
+    <h4>{{product.price}}</h4>
+    {# Product seller (uses relationship) #}
+    <h4>{{product.seller.name}}</h4>
+    {# Product description #}
+    <p>{{product.description|safe}}</p>    
+
+    <br>
+    <a href = "{{url_for('seller.products')}}">Return to products</a>
+{% endblock %}
+

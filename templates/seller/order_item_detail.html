@@ -1,0 +1,15 @@
+{% extends 'base.html '%}
+
+{% block title %}Order item details{% endblock %}
+
+{% block body %}
+    {# Product name #}
+    <h4>Product: {{order_item.product.name}}</h4>
+    {# Quantity #}
+    <h4>Quantity: {{order_item.quantity}}</h4>
+    {# Product price at purchase #}
+    <h4>Product price at purchase: {{order_item.product_price_at_purchase}}</h4>
+
+    <a href = "{{url_for('seller.order_detail', order_id = order_item.order_id)}}">Return to orders</a>
+{% endblock %}
+

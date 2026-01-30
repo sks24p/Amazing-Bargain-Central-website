@@ -4,17 +4,17 @@
 
 {% block body %}
 <div class = "container">
-    <table>
-        <thead>
-            <tr>
-                <th>Order Number</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-            </tr>
-        </thead>    
-        <tbody>
-            {% if orders %}
+    {% if orders %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Order Number</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>    
+            <tbody>
                 {% for order in orders %}
                     <tr onclick="window.location='{{url_for('products.order_detail', order_id=order.id)}}';" style="cursor:pointer;">
                         <td>{{order.id}}</td>
@@ -24,13 +24,12 @@
                         </a>          
                     </tr>
                 {% endfor %}
-            {% else %}
-                <p>You currently have no orders. Why not purchase something?</p>
-                <a href = "{{url_for('auth.account')}}">Back to Account</a>
-            {% endif %}
-        </tbody>
-    
-    </table>
+            </tbody>
+        </table>
+    {% else %}
+        <p>You currently have no orders. Why not purchase something?</p>
+        <a href = "{{url_for('auth.account')}}">Back to Account</a>
+    {% endif %}
 
     <a href = "{{url_for('auth.account')}}">Back to Account</a>
     <a href = "{{url_for('home')}}">Continue shopping</a>

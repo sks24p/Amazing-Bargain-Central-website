@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class = "container">
+    <h1>Edit this product!</h1>
+    <form action = "{{url_for('seller.edit_product', product_id = product.id)}}" method = "POST" id = "edit_product-form" enctype = "multipart/form-data">
+        {# Attach hidden input to insert csrf token inside form #}
+        <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
+
+        <label>Name:</label>
+        <input type = "text" name = "name" value = "{{product.name}}" class = "input-field" required>
+        <br>
+
+        <label for = "description">Description: </label>
+        <small>Markdown supported: **bold**, *italic*, - lists, # headings</small>
+        <textarea name = "description" id = "description" class = "input-field" required>{{product.description|striptags}}</textarea>
+        <br>
+
+        <label>Price:</label>
+        <input type = "number" name = "price" value = "{{product.price}}" class = "input-field" step = "0.01" min = "0.01" required>
+        <br>
+        
+        <label>Thumbnail:</label>
+        {% if product.image_path %}
+            <p>Current image:</p>
+            <img alt = "Product thumbnail" src = "{{url_for('static', filename = product.image_path)}}" style = "max-width: 200px;">
+        {% endif %}
+        <input type = "file" name = "product_thumbnail" accept = "image/*" class = "input-field">
+        <small>Upload new image or leave empty to keep current one</small>
+        <br>
+
+        <button type = "submit">Save changes</button>
+    </form>
+</div>
+{% endblock %}

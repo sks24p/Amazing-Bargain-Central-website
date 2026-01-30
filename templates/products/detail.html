@@ -56,7 +56,7 @@
             <p><strong>Rating:</strong> {{review.rating}} / 5</p>
             <p><strong>Date:</strong> {{review.created_at.strftime("%d-%m-%Y")}}</p>
             {% if review.image_path%}
-                <img alt = "user's review image" src = "{{url_for('static', filename = review.image_path)}}">
+                <img alt = "user's review image" src = "{{url_for('static', filename = review.image_path)}}" style = "max-width: 200px;">
             {% endif %}
             <p>{{review.comment|safe}}</p>
             {% if review.user_id == current_user.id %}

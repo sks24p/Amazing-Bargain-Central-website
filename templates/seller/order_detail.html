@@ -1,0 +1,59 @@
+{% extends 'base.html '%}
+
+{% block title %}Order details{% endblock %}
+
+{% block body %}
+    {# Order ID #}
+    <h4>Order ID: {{order.id}}</h4>
+    {# Customer name #}
+    <h4>Customer name: {{order.user.name}}</h4>
+    {# Date #}
+    <h4>Date: {{order.created_at}}</h4>
+    {# Status #}
+    <h4>Status: {{order.status}}</h4>  
+    {# Revenue #}
+    <h4>Revenue: {{order.total_price}}</h4>
+    {# Delivery address #}
+    <h4>Deliver address: {{order.delivery_address}}</h4>
+    <br>
+
+    
+    <div class = "container">
+        <h1>Order items</h1>
+        {% if seller_items %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>             
+                        <th>Product price at purchase</th>                
+                        <th>Actions</th>                
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in seller_items %}
+                        <tr>
+                            <td>{{item.product.name}}</td>
+                            <td>{{item.quantity}}</td>
+                            <td>{{item.product_price_at_purchase}}</td>
+                            <td>
+                                {# View product detail #}
+                                <a href = "{{url_for('seller.order_item_detail', order_id = order.id, order_item_id = item.id)}}">View order item</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan = "4" style = "text-align: right;"><strong>Total:</strong></td>
+                        <td><strong>{{total}}</strong></td>
+                        {# <td></td> #}
+                    </tr>
+                </tfoot>
+            </table>
+        {% endif %}
+    </div>
+
+    <a href = "{{url_for('seller.orders')}}">Return to orders</a>
+{% endblock %}
+

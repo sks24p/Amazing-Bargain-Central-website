@@ -1,0 +1,75 @@
+{% extends 'base.html'%}
+
+{% block title %}Orders featuring your products{% endblock %}
+
+{% block body %}
+
+{# Filters #}
+<form action = "{{url_for('seller.orders')}}" method = "GET" style = "display:inline;">
+    {# CSRF protection #}
+    <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
+
+    {# Status filter #}
+    <select name = "status">
+        <option value = "all" {% if current_status == 'all' %} selected {% endif %}>All</option>
+        <option value = "processing" {% if current_status == 'processing' %} selected {% endif %}>Processing</option>
+        <option value = "fulfiled" {% if current_status == 'fulfiled'%} selected {% endif %}>Fulfiled</option>
+        <option value = "denied" {% if current_status == 'denied'%} selected {% endif %}>Denied</option>
+    </select>
+
+    {# Date filter #}
+    <select name = "date">
+        <option value = "all" {% if current_date == 'all'%} selected {% endif %}>All</option>
+        <option value = "today" {% if current_date == 'today'%} selected {% endif %}>Today</option>
+        <option value = "yesterday" {% if current_date == 'yesterday'%} selected {% endif %}>Yesterday</option>
+        <option value = "week" {% if current_date == 'week'%} selected {% endif %}>Week</option>
+        <option value = "month" {% if current_date == 'month'%} selected {% endif %}>Month</option>
+        <option value = "year" {% if current_date == 'year'%} selected {% endif %}>Year</option>
+
+    {# Limit filter #}
+    <input type = "number" name = "limit" min = "1" value = "{{current_limit}}">
+
+    <button type = "submit">Submit</button>
+    </select>
+</form>
+
+
+<div class = "container">
+    <h1>Orders</h1>
+    {% if orders %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer name</th>             
+                    <th>Date</th>                
+                    <th>Status</th>                
+                    <th>Revenue</th>
+                    <th>Delivery address</th>
+                    <th>Actions</th>                
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td>{{order.id}}</td>
+                        <td>{{order.user.name}}</td>
+                        <td>{{order.created_at}}</td>
+                        <td>{{order.status}}</td>
+                        <td>{{order.total_price}}</td>
+                        <td>{{order.delivery_address}}</td>
+                        <td>
+                            {# View product detail #}
+                            <a href = "{{url_for('seller.order_detail', order_id = order.id)}}">View order</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No orders yet. Start marketing asap!</p>
+        <a href = "{{url_for('seller.dashboard')}}">Return to dashboard</a>
+    {% endif %}
+</div>
+
+{% endblock %}
