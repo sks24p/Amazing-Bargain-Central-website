@@ -99,7 +99,25 @@ def process_thumbnail(thumbnail):
     image_path = f"uploads/products/{secure_filename}"   
     return image_path
 
+def get_viewing_seller_id():
+    """Get seller's id to view (for admin viewing other sellers, or seller viewing own)"""
 
+    """ - The input for user_id can only be found on admin/user_detail.html (an admin only page basically)
+        - Since only admins can access that input, the else clause means that when a regular seller clicks on a route 
+          that contains this method, their user_id will be returned. And if an admin is logging in, they can log in using 
+          a particular user's ID.
+    """
+
+    view_user_id = request.args.get('user_id', type=int)
+    
+    if view_user_id:
+        # Admin viewing specific seller
+        if current_user.role != 'admin':
+            abort(403)
+        return view_user_id
+    else:
+        # Normal seller viewing own stuff
+        return current_user.id
 
 # Routes
 
@@ -107,13 +125,17 @@ def process_thumbnail(thumbnail):
 @seller_bp.route("/dashboard")
 def dashboard():
     """Seller dashboard - manage products """
-    return render_template("seller/dashboard.html")
+    seller_id = get_viewing_seller_id()
+    return render_template("seller/dashboard.html", viewing_seller_id = seller_id)
 
 # Product detail page for seller 
 @seller_bp.route("/products")
 def products():
     """Show all products belonging to seller """
-    products = Products.query.filter_by(seller_id = current_user.id).all()
+    seller_id = get_viewing_seller_id()
+    page = request.args.get("page", 1, type = int)
+
+    products = Products.query.filter_by(seller_id = seller_id).paginate(page = page, per_page = 20)
     return render_template("seller/products.html", products = products)
 
 # Product detail for a particular product for seller 
@@ -214,6 +236,10 @@ def edit_product(product_id):
         db.session.commit()
         
         flash("Product updated successfully!", category = "success")
+
+        if current_user.role == "admin":
+            return redirect(url_for("admin.products"))
+
         return redirect(url_for("seller.dashboard"))
     return render_template("seller/edit_product.html", product = product)
 
@@ -227,17 +253,24 @@ def remove_product(product_id):
         db.session.delete(product)
         db.session.commit()
         flash("Product deleted", category = "info")
+
+        if current_user.role == "admin":
+            return redirect(url_for("admin.products"))
+
         return redirect(url_for("seller.dashboard"))
     
 @seller_bp.route("/manage-orders")
 def orders():
+    seller_id = get_viewing_seller_id()
+    page = request.args.get("page", 1, type = int)
+
     # Query seller's orders (s_o_query for short)
     s_o_query = db.session.query(Orders).join(
         Order_Items, Orders.id == Order_Items.order_id
     ).join(
         Products, Order_Items.product_id == Products.id
     ).filter(
-        Products.seller_id == current_user.id
+        Products.seller_id == seller_id
     )
 
     # Status filter
@@ -267,25 +300,24 @@ def orders():
             year_ago = datetime.now() - timedelta(days = 365)
             s_o_query = s_o_query.filter(Orders.created_at >= year_ago)
     
-    # Limit filter
-    limit_filter = request.args.get('limit', 20, type = int)
     
-    orders = s_o_query.distinct().order_by(Orders.created_at.desc()).limit(limit_filter).all()
+    orders = s_o_query.distinct().order_by(Orders.created_at.desc()).paginate(page = page, per_page = 20)
     return render_template('seller/orders.html',
                            orders = orders,
                            current_status = status_filter,
-                           current_date = date_filter,
-                           current_limit = limit_filter)
+                           current_date = date_filter)
 
 @seller_bp.route("/manage-orders/<int:order_id>")
 def order_detail(order_id):
-    order, seller_items = check_order_access(order_id)
-    total = sum(item.quantity * item.product_price_at_purchase for item in seller_items)
+    """View order details. Includes its order items (seller can only view order items of their own products)"""
+    order, order_items = check_order_access(order_id)
+    total = sum(item.quantity * item.product_price_at_purchase for item in order_items)
 
-    return render_template("seller/order_detail.html", order = order, seller_items = seller_items, total = total)
+    return render_template("seller/order_detail.html", order = order, order_items = order_items, total = total)
 
 @seller_bp.route("/manage-orders/<int:order_id>/<int:order_item_id>")
 def order_item_detail(order_id, order_item_id):
+    """View the details of an order item from a particular order"""
     order_item = Order_Items.query.get_or_404(order_item_id)
 
     if order_item.product.seller_id == current_user.id or current_user.role == 'admin':

@@ -1,11 +1,12 @@
 {% extends 'base.html'%}
 
-{% block title %}Orders featuring your products{% endblock %}
+{% block title %}View orders{% endblock %}
 
 {% block body %}
 
 {# Filters #}
-<form action = "{{url_for('seller.orders')}}" method = "GET" style = "display:inline;">
+<form action = "{{url_for('admin.orders')}}" method = "GET" style = "display:inline;">
+
     {# Status filter #}
     <select name = "status">
         <option value = "all" {% if current_status == 'all' %} selected {% endif %}>All</option>
@@ -22,10 +23,10 @@
         <option value = "week" {% if current_date == 'week'%} selected {% endif %}>Week</option>
         <option value = "month" {% if current_date == 'month'%} selected {% endif %}>Month</option>
         <option value = "year" {% if current_date == 'year'%} selected {% endif %}>Year</option>
-
     </select>
 
     <button type = "submit">Submit</button>
+
 </form>
 
 
@@ -72,7 +73,7 @@
     </div>
     {% else %}
         <p>No orders yet. Start marketing asap!</p>
-        <a href = "{{url_for('seller.dashboard')}}">Return to dashboard</a>
+        <a href = "{{url_for('admin.dashboard')}}">Return to dashboard</a>
     {% endif %}
 </div>
 

@@ -76,6 +76,8 @@ def register():
                 flash("Password must contain at least one number", category = "error")
             elif '@' not in email:
                 flash("Invalid email format", category = "error")
+            elif '@' in name:
+                flash("'@' not allowed in name", category = "error")
             elif len(address) > 200:
                 flash("Address is too long (max 200 characters)", category="error") 
             elif any(character in email for character in ['<', '>', '"', "'"]):
@@ -89,7 +91,13 @@ def register():
                     address = address)  
                 db.session.add(new_user)
                 db.session.commit()
-                # Log the user in immediately
+
+                # Check if the admin is logged in when creating an account
+                if current_user.is_authenticated and current_user.role == "admin":
+                    flash("User created!", category = "success")
+                    return redirect(url_for('admin.users'))
+
+                # Else, log the user in immediately
                 login_user(new_user, remember = False)
                 flash("User created!", category = "success")
                 return redirect(url_for('home'))

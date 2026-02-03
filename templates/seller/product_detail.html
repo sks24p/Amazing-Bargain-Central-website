@@ -14,6 +14,21 @@
     {# Product description #}
     <p>{{product.description|safe}}</p>    
 
+    {% if current_user.role == "admin"%}
+        {# Edit product #}
+        <form action = "{{url_for('seller.edit_product', product_id = product.id)}}" method = "GET" style = "display:inline;">
+            {# CSRF protection #}
+            <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
+            <button type = "submit">Edit</button>
+        </form>
+        {# Remove product #}
+        <form action = "{{url_for('seller.remove_product', product_id = product.id)}}" method = "POST" style = "display:inline;">
+            {# CSRF protection #}
+            <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
+            <button type = "submit" onclick = "return confirm('Are you sure you want to remove this product?')">Remove</button>
+        </form>
+    {% endif %}
+
     <br>
     <a href = "{{url_for('seller.products')}}">Return to products</a>
 {% endblock %}

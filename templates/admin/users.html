@@ -1,0 +1,67 @@
+{% extends "base.html"%}
+
+{% block title %} View users {% endblock %}
+
+{% block body %}
+
+{# Create new account (redirected to register - don't need to log out as admin) #}
+<a href = "{{url_for('auth.register')}}">Create user account</a>
+
+
+{# Search users by name or email #}
+<form action = "{{url_for('admin.users')}}" method = "GET" style = "display:inline">
+    <input type = "text" name = "search" placeholder = "Enter email or name">
+    <button type = "submit">Search</button>
+</form>
+
+{% if users %}
+<div class = "container">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Address</th>
+                <th>Registration date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for user in users.items %}
+                    <td>{{user.name}}</td>
+                    <td>{{user.email}}</td>
+                    <td>{{user.role}}</td>
+                    <td>{{user.address}}</td>
+                    <td>{{user.created_at}}</td>
+                    <td>
+                        <a href = "{{url_for('admin.user_detail', user_id = user.id)}}">View user</a>
+                    </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+
+    </table>
+</div>
+
+<div class = "pagination">
+    {% if users.has_prev %}
+        <a href = "?page = {{users.prev_num}}">Previous</a>
+    {% endif %}
+    {% if users.pages == 0 %}
+        <p>Page 0 of 0 pages.</p>
+    {% endif %}
+    {% if users.pages >= 1 %}
+        <p>Page {{users.page}} of {{users.pages}}</p>
+    {% endif %}
+    {% if users.has_next %}
+        <a href = "?page = {{users.next_num}}">Next</a>
+    {% endif %}
+</div>
+{% else %}
+    <p>No users created. Please create one.</p>
+{% endif %}
+
+<a href = "{{url_for('admin.dashboard')}}">Return to dashboard</a>
+{% endblock %}

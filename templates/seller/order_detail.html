@@ -17,10 +17,24 @@
     <h4>Deliver address: {{order.delivery_address}}</h4>
     <br>
 
+    {# Allow admin to change order status #}
+    {% if current_user.role == "admin" %}
+        <form action = "{{url_for('admin.change_order_status', order_id = order.id)}}" method = "POST">
+            {# CSRF protection #}
+            <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+            <select name = "order_status">
+                <option value = "processing">Processing</option>
+                <option value = "fulfilled">Fulfilled</option>
+                <option value = "denied">Denied</option>
+            </select>
+            <button type = "submit" onclick = "return confirm(`Are you sure you want to change the order status? This affects the entire order.`)">Save changes</button>
+        </form>
+    {% endif %}
+
     
     <div class = "container">
         <h1>Order items</h1>
-        {% if seller_items %}
+        {% if order_items %}
             <table>
                 <thead>
                     <tr>
@@ -31,7 +45,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in seller_items %}
+                    {% for item in order_items %}
                         <tr>
                             <td>{{item.product.name}}</td>
                             <td>{{item.quantity}}</td>
@@ -54,6 +68,11 @@
         {% endif %}
     </div>
 
-    <a href = "{{url_for('seller.orders')}}">Return to orders</a>
+    {% if current_user.role == "seller"%}
+        <a href = "{{url_for('seller.orders')}}">Return to orders</a>
+    {% endif %}
+    {% if current_user.role == "admin"%}
+        <a href = "{{url_for('admin.orders')}}">Return to orders</a>
+    {% endif %}
 {% endblock %}
 

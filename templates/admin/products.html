@@ -1,38 +1,39 @@
-{% extends 'base.html '%}
+{% extends "base.html"%}
 
-{% block title %}Products{% endblock %}
+{% block title %} View products {% endblock %}
 
-{% block body %} 
+{% block body %}
 
-<a href = "{{url_for('seller.add_product')}}">Add a product</a>
+{# Search products by product name or product seller #}
+<form action = "{{url_for('admin.products')}}" method = "GET" style = "display:inline">
+    <input type = "text" name = "product_name" placeholder = "Enter product name">
+    <input type = "text" name = "seller_name" placeholder = "Enter product seller's name">
+    <button type = "submit">Search</button>
+</form>
 
-
+{% if products %}
 <div class = "container">
-    <h1>Products</h1>
-    {% if products %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th>Product</th>             
-                    <th>Price</th>                
-                    <th>Created at</th>                
-                    <th>Updated at</th>
-                    <th>Actions</th>                
-                </tr>
-            </thead>
-            <tbody>
+    <table>
+        <thead>
+            <tr>
+                <th>Thumbnail</th>
+                <th>Name</th>
+                <th>Seller</th>
+                <th>Price</th>
+                <th>Created at</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
                 {% for product in products.items %}
-                    <tr>
-                        <td>
-                            <img src = "{{url_for('static', filename = product.image_path)}}" alt = "{{product.name}}" style = "max-width: 300px; max-height: 300 px;">
-                        </td>
-                        <td>{{product.name}}</td>
-                        <td>{{product.price}}</td>
-                        <td>{{product.created_at}}</td>
-                        <td>{{product.updated_at}}</td>
-                        <td>
-                            {# Edit product #}
+                    <td><img alt = "Thumbnail" src = "{{url_for('static', filename = product.image_path)}}" style = "max-width: 300px; max-height: 300px;"></td>
+                    <td>{{product.name}}</td>
+                    <td>{{product.seller.name}}</td>
+                    <td>{{product.price}}</td>
+                    <td>{{product.created_at}}</td>
+                    <td>
+                        {# Edit product #}
                             <form action = "{{url_for('seller.edit_product', product_id = product.id)}}" method = "GET" style = "display:inline;">
                                 {# CSRF protection #}
                                 <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
@@ -51,11 +52,15 @@
                             {# View product detail #}
                             <a href = "{{url_for('seller.product_detail', product_id = product.id)}}">View product</a>
                         </td>
-                    </tr>
+                    </td>
                 {% endfor %}
-            </tbody>
-        </table>
-    <div class = "pagination">
+            </tr>
+        </tbody>
+
+    </table>
+</div>
+
+<div class = "pagination">
     {% if products.has_prev %}
         <a href = "?page={{products.prev_num}}">Previous</a>
     {% endif %}
@@ -64,10 +69,9 @@
         <a href = "?page={{products.next_num}}">Next</a>
     {% endif %}
 </div>
-    {% else %}
-        <p>No products created yet. Start selling asap!</p>
-        <a href = "{{url_for('seller.dashboard')}}">Return to dashboard</a>
-    {% endif %}
-</div>
+{% else %}
+    <p>No products created. Please create one.</p>
+{% endif %}
 
+<a href = "{{url_for('admin.dashboard')}}">Return to dashboard</a>
 {% endblock %}
