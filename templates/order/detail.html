@@ -3,8 +3,8 @@
 {% block title %}Order detail{% endblock %}
 
 {% block body %}
-<div class = "container">
-    <p><strong>Order number:</strong> {{order.id}}</p>
+<div class = "container mt-2 pt-1">
+    <h1>Order #{{order.id}}</h1>
     <p><strong>Date ordered:</strong> {{order.created_at}}</p>
     <p><strong>Order status:</strong> {{order.status}}</p>
     <p><strong>Delivery address:</strong> {{order.delivery_address}}</p>
@@ -38,8 +38,9 @@
     
     </table>
 
-    <a href = "{{url_for('auth.account')}}">Back to Account</a>
-    <a href = "{{url_for('home')}}">Continue shopping</a>
-
+    <div class = "link-group mt-2">
+        <a href = "{{url_for('auth.account')}}" class = "btn btn-link">Back to Account</a>
+        <a href = "{{url_for('home')}}" class = "btn btn-link">Continue shopping</a>
+    </div>
 </div>
 {% endblock %}

@@ -4,10 +4,6 @@
 
 {% block body %}
 
-{# Create new account (redirected to register - don't need to log out as admin) #}
-<a href = "{{url_for('auth.register')}}">Create user account</a>
-
-
 {# Search users by name or email #}
 <form action = "{{url_for('admin.users')}}" method = "GET" style = "display:inline">
     <input type = "text" name = "search" placeholder = "Enter email or name">
@@ -15,7 +11,7 @@
 </form>
 
 {% if users %}
-<div class = "container">
+<div class = "container p-1">
     <table>
         <thead>
             <tr>
@@ -28,8 +24,8 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                {% for user in users.items %}
+            {% for user in users.items %}
+                <tr>
                     <td>{{user.name}}</td>
                     <td>{{user.email}}</td>
                     <td>{{user.role}}</td>
@@ -38,10 +34,9 @@
                     <td>
                         <a href = "{{url_for('admin.user_detail', user_id = user.id)}}">View user</a>
                     </td>
-                {% endfor %}
-            </tr>
+                </tr>
+            {% endfor %}
         </tbody>
-
     </table>
 </div>
 
@@ -63,5 +58,10 @@
     <p>No users created. Please create one.</p>
 {% endif %}
 
-<a href = "{{url_for('admin.dashboard')}}">Return to dashboard</a>
+<div class = "link-group">
+    {# Create new account (redirected to register - don't need to log out as admin) #}
+    <a href = "{{url_for('auth.register')}}" class = "btn btn-primary">Create user account</a>
+    <a href = "{{url_for('admin.dashboard')}}" class = "btn btn-secondary">Return to dashboard</a>
+</div>
+
 {% endblock %}

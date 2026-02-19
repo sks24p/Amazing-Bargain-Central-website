@@ -4,10 +4,9 @@
 
 {% block body %}
 <div class = "container">
-    <a href = "{{url_for('auth.account')}}"></a>
-
-    <a href = "{{url_for('seller.products')}}">View all products</a>
-    <a href = "{{url_for('seller.orders')}}">View all orders</a>
-
+    <div class = "link-group-v">
+        <a href = "{{url_for('seller.products')}}" class = "btn btn-link">View all products</a>
+        <a href = "{{url_for('seller.orders')}}" class = "btn btn-link">View all orders</a>
+    </div>
 </div>
 {% endblock %}

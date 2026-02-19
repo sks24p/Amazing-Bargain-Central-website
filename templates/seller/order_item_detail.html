@@ -3,13 +3,21 @@
 {% block title %}Order item details{% endblock %}
 
 {% block body %}
-    {# Product name #}
-    <h4>Product: {{order_item.product.name}}</h4>
-    {# Quantity #}
-    <h4>Quantity: {{order_item.quantity}}</h4>
-    {# Product price at purchase #}
-    <h4>Product price at purchase: {{order_item.product_price_at_purchase}}</h4>
 
-    <a href = "{{url_for('seller.order_detail', order_id = order_item.order_id)}}">Return to order details</a>
+    <div class = "container p-2">
+        <h1>Order item details</h1>
+        {# Product name #}
+        <p><strong>Product:</strong> {{order_item.product.name}}</p>
+        {# Quantity #}
+        <p><strong>Quantity:</strong> {{order_item.quantity}}</p>
+        {# Product price at purchase #}
+        <p><strong>Product price at purchase:</strong> {{order_item.product_price_at_purchase}}</p>
+
+        <div class = "mt-2">
+            <a href = "{{url_for('seller.order_detail', order_id = order_item.order_id)}}" class = "btn btn-secondary">Return to order details</a>
+        </div>
+    </div>
+
+
 {% endblock %}
 

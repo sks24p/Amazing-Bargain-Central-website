@@ -3,45 +3,58 @@
 {% block title %}Search Results{% endblock %}
 
 {% block body %}
-<div class = "container">
-    <h1>Welcome to Amazing Bargain Central!</h1>
-    <p>The store where you can find anything you are looking for!</p>
-
+<div class="container p-2">
     {# Search bar #}
-    <form action = "{{ url_for('products.search') }}" method = "GET">
-        <input type = "text" name = "query" placeholder = "Search products..." value = "{{query}}">
-        <button type = "submit">Search</button>
-    </form>
+    <div class="search-header mb-2">
+        <h1>Search Products</h1>
+        <form action="{{url_for('products.search')}}" method="GET" class="search-form">
+            <input type="text" 
+                   name="query" 
+                   placeholder="Search products..." 
+                   value="{{query}}"
+                   class="search-input">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
 
-    <p>Search results for {{query}}</p>
-
-    <h2>Featured Products</h2>
-    {% if products %}
-        {% if products|length == 1 %}
-            <p>Found {{products|length}} product</p>
-        {% endif %}
-        {% if products|length > 1 %}
-            <p>Found {{products|length}} products</p>
-        {% endif %}
-
-        <div class = "product_container">
-            {% for product in products %}
-                {# The <a></a> tag covers the container so that you can click anywhere in a product card to access its product details #}
-                <a href = "{{url_for('products.product_detail', product_id = product.id)}}" class = "product_card_link">
-                    <div class = "product_card">
-                        {# Display thumbnail (fit to resolution of card container) #}
-                        <img alt = "Product Image" src = "{{product.image_url}}">
-                        {# Product name #}
-                        <p>{{product.name}}</p>
-                        {# Product price #}
-                        <h3>{{product.price}}</h3>
-                    </div>
-                </a>
-            {% endfor %}
+    {# Results #}
+    {% if query %}
+        <div class="search-results-header mb-2">
+            <h2>Search Results for "{{query}}"</h2>
+            {% if products %}
+                <p class="results-count">
+                    Found {{products|length}} 
+                    {% if products|length == 1 %}product{% else %}products{% endif %}
+                </p>
+            {% endif %}
         </div>
+
+        {% if products %}
+            <div class="product_container">
+                {% for product in products %}
+                    <div class="product-card">
+                        <a href="{{url_for('products.product_detail', product_id=product.id)}}">
+                            <img src="{{url_for('static', filename=product.image_path)}}" 
+                                 alt="{{product.name}}">
+                            <div class="product-info">
+                                <h3>{{product.name}}</h3>
+                                <div class="price">£{{product.price}}</div>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-results">
+                <p>No products found matching "<strong>{{query}}</strong>"</p>
+                <a href="{{url_for('home')}}" class="btn btn-link mt-1">Back to Home</a>
+            </div>
+        {% endif %}
     {% else %}
-        <p>No products found matching: {{query}}</p>
-        <p><a href = "{{url_for('home')}}">Back to Home</a></p>
+        <div class="no-query">
+            <p>Enter a search term to find products</p>
+            <a href="{{url_for('home')}}" class="btn btn-link">Back to Home</a>
+        </div>
     {% endif %}
 </div>
 

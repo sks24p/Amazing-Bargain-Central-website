@@ -1,9 +1,10 @@
 from multiprocessing import Value
 from flask_login import current_user, login_required
 from flask import abort, Blueprint, request, flash, render_template, url_for, redirect, current_app
-from models import Products, db, Orders, Order_Items
+from models import Products, db, Orders, Order_Items, Cart_Items
 from security import File_Security as FS, Data_Security as DS
 from datetime import datetime, timedelta
+from logger import log_event
 
 # Creating Blueprint
 seller_bp = Blueprint('seller', __name__)
@@ -158,6 +159,8 @@ def add_product():
             price = float(price_str)
         except (ValueError, TypeError):
             flash("Invalid price value.", category = "error")
+            # Log add product failure because of Price validation
+            log_event('validation_error', f"User {current_user.email} failed to add product because of price validation", severity = "error")
             return redirect(url_for("seller.dashboard"))
 
         # Validate product fields and sanitise description
@@ -165,6 +168,8 @@ def add_product():
             cleaned_description = validating_add_product(name, description, price)
         except ValueError as e:
             flash(str(e), category="error")
+            # Log add product failure because of Description validation
+            log_event('validation_error', f"User {current_user.email} failed to add product because of description validation", severity = "error")
             return redirect(url_for("seller.dashboard"))
         
         # Validate thumbnail, sanitise file name and return file path
@@ -172,9 +177,13 @@ def add_product():
             image_path = process_thumbnail(thumbnail)
         except ValueError as e:
             flash(str(e), category="error")
+            # Log add product failure because of Image validation
+            log_event('validation_error', f"User {current_user.email} failed to add product because of ValueError for image validation", severity = "error")
             return redirect(url_for("seller.dashboard"))
         except Exception as e:
             print(f"Error saving file: {e}")
+                # Log add product failure because of Image validation
+            log_event('validation_error', f"User {current_user.email} failed to add product because of image validation", severity = "error")
             flash("Error uploading image. Please try again.", category = "error")
             return redirect(url_for("seller.dashboard"))
 
@@ -188,6 +197,8 @@ def add_product():
         )
         db.session.add(new_product)
         db.session.commit()
+        # Log adding product
+        log_event('product_added', f"User {current_user.email} added a product: {name}")
         flash("You have successfully created a product!", category = "success")
         return redirect(url_for("seller.dashboard"))
     return render_template("seller/add_product.html")
@@ -207,6 +218,8 @@ def edit_product(product_id):
             price = float(price_str)
         except (ValueError, TypeError):
             flash("Invalid price value.", category = "error")
+            # Log edit product failure because of Price validation
+            log_event('validation_error', f"User {current_user.email} failed to edit product because of price validation", severity = "error")
             return redirect(url_for("seller.dashboard"))
         
         # Validate product fields and sanitise description
@@ -214,6 +227,8 @@ def edit_product(product_id):
             cleaned_description = validating_edit_product(product, name, description, price)
         except ValueError as e:
             flash(str(e), category="error")
+            # Log edit product failure because of Description validation
+            log_event('validation_error', f"User {current_user.email} failed to edit product because of ValueError for description validation", severity = "error")
             return redirect(url_for("seller.dashboard"))
 
         # Validate thumbnail, sanitise file name and return file path
@@ -223,10 +238,14 @@ def edit_product(product_id):
                product.image_path = image_path
         except ValueError as e:
             flash(str(e), category="error")
+            # Log edit product failure because of Image validation
+            log_event('validation_error', f"User {current_user.email} failed to edit product because of ValueError for image validation", severity = "error")
             return redirect(url_for("seller.dashboard"))
         except Exception as e:
             print(f"Error saving file: {e}")
             flash("Error uploading image. Please try again.", category = "error")
+            # Log edit product failure because of Image validation
+            log_event('validation_error', f"User {current_user.email} failed to edit product because of image validation", severity = "error")
             return redirect(url_for("seller.dashboard"))
 
         # Update product fields
@@ -235,6 +254,8 @@ def edit_product(product_id):
         product.price = price
         db.session.commit()
         
+        # Log editing product
+        log_event('product_edited', f"User {current_user.email} edited product: {product.name}")
         flash("Product updated successfully!", category = "success")
 
         if current_user.role == "admin":
@@ -250,6 +271,18 @@ def remove_product(product_id):
     if request.method == "POST":
         product = check_product_ownership(product_id)
 
+        # Check if product is in any orders
+        has_orders = Order_Items.query.filter_by(product_id=product_id).first()
+        
+        if has_orders:
+            flash("Cannot delete product - it exists in customer orders.", category="error")
+            return redirect(url_for('admin.products'))
+        
+        # Remove from any shopping carts first
+        Cart_Items.query.filter_by(product_id=product_id).delete()
+    
+        # Log removing product
+        log_event('product_removed', f"User {current_user.email} removed product: {product.name}")
         db.session.delete(product)
         db.session.commit()
         flash("Product deleted", category = "info")

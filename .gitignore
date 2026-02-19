@@ -12,5 +12,8 @@ static/uploads
 *.pyo
 *.pyd
 
+# Environmental variables
+.env
+
 # Notes for account details
 notes for account details for users.txt

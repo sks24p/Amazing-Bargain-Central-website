@@ -1,0 +1,104 @@
+{% extends 'base.html'%}
+
+{% block title %}View Logs{% endblock %}
+
+{% block body %}
+<h1>Analytics Dashboard</h1>
+<div class = "container">
+    <!-- Section 1: Totals -->
+    <div class = "stats-overview">
+        <h2>Site Overview</h2>
+        <p>Total Users: <strong>{{total_users}}</strong></p>
+        <p>Total Products: <strong>{{total_products}}</strong></p>
+        <p>Total Orders: <strong>{{total_orders}}</strong></p>
+        <p>Total Product Views: <strong>{{total_product_views}}</strong></p>
+    </div>
+
+    <!-- Section 2: Login activity (last 7 days) -->
+    <div class = "login-stats">
+        <h2>Login Activity (last 7 days)</h2>
+        {% if login_query %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Successes</th>
+                        <th>Failures</th>                
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for date, successes, failures in login_query%}
+                        <tr>
+                            <td>{{date}}</td>
+                            <td style="color: green;">{{successes}}</td>
+                            <td style="color: red;">{{failures}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No login data for the past 7 days.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section 3: Recent activity -->
+    <div class = "recent-activity">
+        <h2>Recent Activity</h2>
+        {% if recent_activity_query %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Log ID</th>
+                        <th>Timestamp</th>             
+                        <th>User</th>                
+                        <th>Action Type</th>                
+                        <th>Details</th>
+                        <th>IP address</th>
+                        <th>Severity</th>                
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in recent_activity_query %}
+                        <tr>
+                            <td>{{row.id}}</td>
+                            <td>{{row.timestamp.strftime('%Y-%m-%d %H-%M-%S')}}</td>
+                            <td>{{row.user.email if log_user else 'Anonymous'}}</td>
+                            <td>{{row.action_type}}</td>
+                            <td>{{row.details}}</td>
+                            <td>{{row.ip_address}}</td>
+                            <td>{{row.severity}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No recent activity.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section 4: Most viewed products -->
+    <div class = "most-viewed-products">
+        <h2>Most Viewed Products</h2>
+        {% if viewed_products_query %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Views</th>                
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product, view_count in viewed_products_query%}
+                        <tr>
+                            <td>{{product}}: <strong>{{view_count}}</strong> {% if view_count == 1%} view {% else %} views {% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No products viewed yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -24,6 +24,7 @@ class Users(db.Model, UserMixin):
     orders = db.relationship('Orders', back_populates='user', lazy = True)
     reviews = db.relationship('Reviews', back_populates='user', lazy = True)
     cart_items = db.relationship('Cart_Items', back_populates = 'user', lazy = True )
+    logs = db.relationship('Logs', back_populates = 'user', lazy = True)
 
 class Products(db.Model):
     __tablename__ = 'products'
@@ -55,7 +56,7 @@ class Cart_Items(db.Model):
     quantity = db.Column(db.Integer, nullable = False)
     added_at = db.Column(db.DateTime, default = func.now())
     # Constraints
-    db.CheckConstraint('quantity < 0', name = 'check_cart_item_quantity')
+    db.CheckConstraint('quantity > 0', name = 'check_cart_item_quantity')
     # Relationships
     user = db.relationship('Users', back_populates = 'cart_items', lazy = True)
     product = db.relationship('Products', back_populates = "cart_items")
@@ -112,4 +113,15 @@ class Reviews(db.Model):
     user = db.relationship('Users', back_populates = 'reviews', lazy = True)
     product = db.relationship('Products', back_populates = 'reviews', lazy = True)     
 
-
+class Logs(db.Model):
+    __tablename__ = 'logs'
+    # Columns
+    id = db.Column(db.Integer, primary_key = True)
+    timestamp = db.Column(db.DateTime, default = func.now(), nullable = False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable = True) # Nullable = True for anonymous viewers
+    action_type = db.Column(db.String(50), nullable = False)
+    details = db.Column(db.Text, nullable = True)
+    ip_address = db.Column(db.String(100), nullable = True)
+    severity = db.Column(db.String(20), default='info')  # 'info', 'warning', 'error'
+    # Relationships
+    user = db.relationship('Users', back_populates = 'logs', lazy = True)

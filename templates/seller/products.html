@@ -1,14 +1,16 @@
-{% extends 'base.html '%}
+{% extends 'base.html' %}
 
 {% block title %}Products{% endblock %}
 
 {% block body %} 
 
-<a href = "{{url_for('seller.add_product')}}">Add a product</a>
-
-
-<div class = "container">
+<div class="container p-1">
     <h1>Products</h1>
+    
+    <div class="mb-2">
+        <a href="{{url_for('seller.add_product')}}" class="btn btn-link">Add a product</a>
+    </div>
+    
     {% if products %}
         <table>
             <thead>
@@ -16,8 +18,8 @@
                     <th>Image</th>
                     <th>Product</th>             
                     <th>Price</th>                
-                    <th>Created at</th>                
-                    <th>Updated at</th>
+                    <th>Created</th>                
+                    <th>Updated</th>
                     <th>Actions</th>                
                 </tr>
             </thead>
@@ -25,48 +27,57 @@
                 {% for product in products.items %}
                     <tr>
                         <td>
-                            <img src = "{{url_for('static', filename = product.image_path)}}" alt = "{{product.name}}" style = "max-width: 300px; max-height: 300 px;">
+                            <img src="{{url_for('static', filename=product.image_path)}}" 
+                                 alt="{{product.name}}" 
+                                 class="product-thumbnail">
                         </td>
                         <td>{{product.name}}</td>
-                        <td>{{product.price}}</td>
-                        <td>{{product.created_at}}</td>
-                        <td>{{product.updated_at}}</td>
+                        <td>£{{product.price}}</td>
+                        <td>{{product.created_at.strftime('%Y-%m-%d %H:%M')}}</td>
+                        <td>{{product.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
                         <td>
-                            {# Edit product #}
-                            <form action = "{{url_for('seller.edit_product', product_id = product.id)}}" method = "GET" style = "display:inline;">
-                                {# CSRF protection #}
-                                <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
-                                <button type = "submit">Edit</button>
-                            </form>
-                        </td>
-                        <td>
-                            {# Remove product #}
-                            <form action = "{{url_for('seller.remove_product', product_id = product.id)}}" method = "POST" style = "display:inline;">
-                                {# CSRF protection #}
-                                <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
-                                <button type = "submit" onclick = "return confirm('Are you sure you want to remove this product?')">Remove</button>
-                            </form>
-                        </td>
-                        <td>
-                            {# View product detail #}
-                            <a href = "{{url_for('seller.product_detail', product_id = product.id)}}">View product</a>
+                            <div class="action-buttons">
+                                {# Edit button #}
+                                <a href="{{url_for('seller.edit_product', product_id=product.id)}}" 
+                                   class="btn btn-primary btn-sm">Edit</a>
+                                
+                                {# Remove button #}
+                                <form action="{{url_for('seller.remove_product', product_id=product.id)}}" 
+                                      method="POST" 
+                                      style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+                                    <button type="submit" 
+                                            class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Are you sure you want to remove this product?')">
+                                        Remove
+                                    </button>
+                                </form>
+                                
+                                {# View link #}
+                                <a href="{{url_for('seller.product_detail', product_id=product.id)}}" 
+                                   class="btn-link-small">View product</a>
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-    <div class = "pagination">
-    {% if products.has_prev %}
-        <a href = "?page={{products.prev_num}}">Previous</a>
-    {% endif %}
-    <p>Page {{products.page}} of {{products.pages}}</p>
-    {% if products.has_next %}
-        <a href = "?page={{products.next_num}}">Next</a>
-    {% endif %}
-</div>
+        
+        {# Pagination #}
+        <div class="pagination">
+            {% if products.has_prev %}
+                <a href="?page={{products.prev_num}}">← Previous</a>
+            {% endif %}
+            
+            <span>Page {{products.page}} of {{products.pages}}</span>
+            
+            {% if products.has_next %}
+                <a href="?page={{products.next_num}}">Next →</a>
+            {% endif %}
+        </div>
     {% else %}
         <p>No products created yet. Start selling asap!</p>
-        <a href = "{{url_for('seller.dashboard')}}">Return to dashboard</a>
+        <a href="{{url_for('seller.dashboard')}}" class="btn btn-link">Return to dashboard</a>
     {% endif %}
 </div>
 

@@ -3,25 +3,34 @@
 {% block title %} Product Details{% endblock %}
 
 {% block body %}
-    {# Display thumbnail #}
-    <img alt = "Product Image" src = "{{url_for('static', filename = product.image_path)}}">
-    {# Product name #}
-    <h1>{{product.name}}</h1>
-    {# Product price #}
-    <h4>{{product.price}}</h4>
-    {# Product seller (uses relationship) #}
-    <h4>{{product.seller.name}}</h4>
-    {# Product description #}
-    <p>{{product.description|safe}}</p>    
+<div class = "container pt-2">
+    <div class = "product-detail">
+        {# Display thumbnail #}
+        <div class="product-detail-image">
+            <img src="{{url_for('static', filename=product.image_path)}}" 
+                 alt="{{product.name}}">
+        </div>
+        <div class = "product-detail-info">
+            <h1>{{product.name}}</h1>
+            <div class="product-meta">
+                <div class="price">£{{product.price}}</div>
+                <div class="seller">Sold by: <strong>{{product.seller.name}}</strong></div>
+            </div>
+            <div class="product-description">
+                <h3>Description</h3>
+                <div>{{product.description|safe}}</div>
+            </div>
 
-    <form action = "{{url_for('products.add_to_cart', product_id = product.id)}}" method = "POST">
-        {# Attach hidden input to insert csrf token inside form #}
-        <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
+            <form action = "{{url_for('products.add_to_cart', product_id = product.id)}}" method = "POST">
+                {# Attach hidden input to insert csrf token inside form #}
+                <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
 
-        <label>Quantity: </label>
-        <input type = "number" min = "1" name = "quantity" value = "1" class = "input-field" required>
-        <button type = "submit" >Add to Cart</button>
-    </form>
+                <label>Quantity: </label>
+                <input type = "number" min = "1" name = "quantity" value = "1" class = "input-field" required>
+                <button type = "submit" >Add to Cart</button>
+            </form>
+        </div>
+    </div>
 
     {# Reviews section #}
     <h2>Reviews</h2>
@@ -50,26 +59,56 @@
         </form>
         <br>
     {% endif %}
-    {% if reviews %}
-        {% for review in reviews %}
-            <h4>{{review.user.name}}</h4>
-            <p><strong>Rating:</strong> {{review.rating}} / 5</p>
-            <p><strong>Date:</strong> {{review.created_at.strftime("%d-%m-%Y")}}</p>
-            {% if review.image_path%}
-                <img alt = "user's review image" src = "{{url_for('static', filename = review.image_path)}}" style = "max-width: 200px;">
-            {% endif %}
-            <p>{{review.comment|safe}}</p>
-            {% if review.user_id == current_user.id %}
-                {# Remove review #}
-                <form action = "{{url_for('products.remove_review', product_id = product.id)}}" method = "POST">
-                    {# CSRF protection #}
-                    <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
-                    <button type="submit" onclick="return confirm('Delete this review?')">Delete Review</button>
-                </form>
-            {% endif %}
-        {% endfor %}
-    {% else %}
-        <p>No reviews yet. Why not be the first to try?</p>
-    {% endif %}
-
+    <div class="reviews-section mt-2">
+        <h2>Customer Reviews</h2>
+        {% if reviews %}
+            <div class="reviews-list">
+                {% for review in reviews %}
+                    <div class="review-card">
+                        {# Review Header #}
+                        <div class="review-header">
+                            <div>
+                                <h4>{{review.user.name}}</h4>
+                                <p class="review-date">{{review.created_at.strftime("%d %B %Y")}}</p>
+                            </div>
+                            <div class="review-rating">
+                                {{review.rating}}/5
+                            </div>
+                        </div>
+                        
+                        {# Review Content #}
+                        <div class="review-content">
+                            {{review.comment|safe}}
+                        </div>
+                        
+                        {# Review Image (if exists) #}
+                        {% if review.image_path %}
+                            <div class="review-image">
+                                <img src="{{url_for('static', filename=review.image_path)}}" 
+                                    alt="Review photo by {{review.user.name}}">
+                            </div>
+                        {% endif %}
+                        
+                        {# Delete button (own review only) #}
+                        {% if review.user_id == current_user.id %}
+                            <div class="review-actions mt-1">
+                                <form action="{{url_for('products.remove_review', product_id=product.id)}}" 
+                                    method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+                                    <button type="submit" 
+                                            class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Delete this review?')">
+                                        Delete Review
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-reviews">No reviews yet. Why not be the first to try?</p>
+        {% endif %}
+    </div>
+</div>
 {% endblock%}

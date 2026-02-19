@@ -1,8 +1,9 @@
 from flask_login import current_user, login_required
 from flask import abort, Blueprint, flash, render_template, url_for, redirect, request
-from models import Users, db, Products, Orders, Order_Items
+from models import Users, db, Products, Orders, Order_Items, Logs, Cart_Items, Reviews
 from datetime import datetime, timedelta
-
+from logger import log_event
+from sqlalchemy import func, case, desc
 
 # Creating Blueprint
 admin_bp = Blueprint('admin', __name__)
@@ -61,12 +62,41 @@ def user_role(user_id):
         user = Users.query.get_or_404(user_id)
         user.role = user_role
         db.session.commit()
+        # Log user role change
+        log_event('user_role_changed', f"Admin {current_user.email} changed user {user.email}'s role to {user.role} ")
         flash(f"User role change successfully to {user_role}.", category = "success")
         return redirect(url_for('admin.user_detail', user_id = user_id))
 
 @admin_bp.route("/users/<int:user_id>/delete", methods = ['POST'])
 def delete_user(user_id):
     user = Users.query.get_or_404(user_id)
+    
+    # Prevent deleting admins
+    if user.role == 'admin':
+        flash("Cannot delete admin accounts.", category="error")
+        return redirect(url_for('admin.users'))
+    
+    # Check if user has orders
+    has_orders = Orders.query.filter_by(user_id=user_id).first()
+    if has_orders:
+        flash("Cannot delete user - they have order history.", category="error")
+        return redirect(url_for('admin.user_detail', user_id=user_id))
+    
+    # Check if user is a seller with products
+    if user.role == 'seller':
+        has_products = Products.query.filter_by(seller_id=user_id).first()
+        if has_products:
+            flash("Cannot delete seller - they have products listed.", category="error")
+            return redirect(url_for('admin.user_detail', user_id=user_id))
+    
+    # Remove from shopping carts
+    Cart_Items.query.filter_by(user_id=user_id).delete()
+    
+    # Remove reviews
+    Reviews.query.filter_by(user_id=user_id).delete()
+
+    # Log user deleted
+    log_event('user_deleted', f"Admin {current_user.email} deleted user {user.email}'s account")
     db.session.delete(user)
     db.session.commit()
     flash("User deleted.", category = "success")
@@ -138,8 +168,83 @@ def change_order_status(order_id):
 
     # Prevent admin from tampering with order status outside of these accepted values
     if order_status not in ["processing", "fulfilled", "denied"]:
-        abort(401)
+        # Log review submission failure
+        log_event('order_status_change_failed', 
+                    f"User {current_user.email} tried to change the order status of Order #{order_id} to an unauthorised value", 
+                    severity = "error")
+        abort(400)
     order.status = order_status
     db.session.commit()
+    # Log order status changed
+    log_event('order_status_changed', f"Admin {current_user.email} changed Order #{order_id}'s status to {order.status}")
     flash("Order status has successfully been updated!", category = "success")
     return redirect(url_for('seller.order_detail', order_id = order_id))
+
+@admin_bp.route("/logs")
+def view_logs():
+    page = request.args.get('page', 1, type = int)
+    # Filter fields
+    action_filter = request.args.get('action', 'all')
+    severity_filter = request.args.get('severity', 'all')
+
+    query = Logs.query
+
+    if action_filter != 'all':
+        query = query.filter(Logs.action_type.ilike(f"%{action_filter}%"))
+    if severity_filter != 'all':
+        query = query.filter(Logs.severity == severity_filter)
+
+    logs = query.order_by(Logs.timestamp.desc()).paginate(page = page, per_page = 50)
+
+    return render_template('admin/logs.html', logs = logs)
+
+@admin_bp.route("/analytics")
+def analytics():
+    week_ago = datetime.now() - timedelta(days = 7)
+    # Query: Successful vs failed Login attempts by day for the week
+    login_query = db.session.query(
+        func.date(Logs.timestamp).label('date'),
+        func.sum(case((Logs.action_type == 'login_success', 1), else_= 0)).label('successes'),
+        func.sum(case((Logs.action_type == 'login_failure', 1), else_= 0)).label('failures')
+    ).filter(
+        Logs.timestamp >= week_ago,
+        Logs.action_type.in_(['login_success', 'login_failure'])
+    ).group_by(func.date(Logs.timestamp)).limit(7).all()
+
+    # Query: Most viewed_products
+    viewed_products_query = db.session.query(
+        Logs.details,
+        func.count(Logs.details).label('views')
+    ).filter(
+        Logs.action_type == 'product_view'    
+    ).group_by(Logs.details).order_by(desc('views')).limit(10).all()
+
+    # Query: recent activity
+    recent_activity_query = Logs.query.order_by(Logs.timestamp.desc()).limit(15).all()
+
+    # Query: Totals 
+    total_users = Users.query.count()
+    total_products = Products.query.count()
+    total_orders = Orders.query.count()
+    total_product_views = Logs.query.filter_by(action_type = 'product_view').count()
+
+    return render_template('admin/analytics.html',
+                           login_query = login_query,
+                           viewed_products_query = viewed_products_query,
+                           recent_activity_query = recent_activity_query,
+                           total_users = total_users,
+                           total_products = total_products,
+                           total_orders = total_orders,
+                           total_product_views = total_product_views)
+
+@admin_bp.route("/cleanup-logs", methods = ['POST'])
+def cleanup_logs():
+    ninety_days_ago = datetime.now() - timedelta(days = 90)
+    deleted_logs = Logs.query.filter(Logs.timestamp < ninety_days_ago).delete()
+    db.session.commit()
+
+    if deleted_logs > 0:
+        flash(f"Successfully deleted {deleted_logs} old log entries.", category = "success")
+    else:
+        flash("No logs older than 90 days found.", category = "info")
+    return redirect(url_for('admin.dashboard'))

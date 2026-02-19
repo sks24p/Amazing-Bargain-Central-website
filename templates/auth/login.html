@@ -3,7 +3,7 @@
 {% block body %}
 <div class = "container">
     <h1>Login</h1>
-    <form action = "{{url_for('auth.login')}}" method = "POST" id = "login-form">
+    <form action = "{{url_for('auth.login')}}" method = "POST">
         {# Attach hidden input to insert csrf token inside form #}
         <input type = "hidden" name = "csrf_token" value = "{{ csrf_token() }}">
         
@@ -15,9 +15,8 @@
         <input type = "password" name = "password" placeholder = "Password" class = "input-field" required>
         <br>
 
-        <button type = "submit">Sign in</button>
-        <br>
-        <a href = "{{url_for('auth.register')}}">Register</a>
+        <button type = "submit" >Sign in</button>
+        <a href = "{{url_for('auth.register')}}" class = "ml-1">Register</a>
     </form>
 </div>
 {% endblock %}

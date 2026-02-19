@@ -25,19 +25,20 @@
         </form>
     {% endif %}
 
-    <a href = "{{url_for('products.my_orders')}}">View your Orders</a>
 
-    <div class = "account-actions">
-        <h2>Quick links</h2>
-        <ul>
+
+    <h2>Quick links</h2>
+    <ul>
+        <div class = "link-group-v">
             {% if current_user.is_authenticated %}
-                <li><a href = "{{url_for('auth.logout')}}">Logout</a></li>
+                <li><a href = "{{url_for('products.my_orders')}}" class = "btn btn-link mb-2">View your Orders</a></li>
+                <li><a href = "{{url_for('auth.logout')}}" class = "btn btn-link">Logout</a></li>
             {% else %}
                 <li><a href = "{{url_for('auth.login')}}">Login</a></li>
                 <li><a href = "{{url_for('auth.register')}}">Register</a></li>
             {% endif %}
-        </ul>
-    </div>
+        </div>
+    </ul>
 
 </div>
 {% endblock %}

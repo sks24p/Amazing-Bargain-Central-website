@@ -12,7 +12,7 @@
 </form>
 
 {% if products %}
-<div class = "container">
+<div class = "container p-1">
     <table>
         <thead>
             <tr>
@@ -25,36 +25,41 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                {% for product in products.items %}
-                    <td><img alt = "Thumbnail" src = "{{url_for('static', filename = product.image_path)}}" style = "max-width: 300px; max-height: 300px;"></td>
+            {% for product in products.items %}
+                <tr>
+                    <td>
+                        <img src="{{url_for('static', filename=product.image_path)}}" 
+                            alt="{{product.name}}" 
+                            class="product-thumbnail">
+                    </td>
                     <td>{{product.name}}</td>
                     <td>{{product.seller.name}}</td>
-                    <td>{{product.price}}</td>
+                    <td>£{{product.price}}</td>
                     <td>{{product.created_at}}</td>
                     <td>
-                        {# Edit product #}
-                            <form action = "{{url_for('seller.edit_product', product_id = product.id)}}" method = "GET" style = "display:inline;">
-                                {# CSRF protection #}
-                                <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
-                                <button type = "submit">Edit</button>
+                        <div class="action-buttons">
+                            {# Edit button #}
+                            <a href="{{url_for('seller.edit_product', product_id=product.id)}}" 
+                                class="btn btn-primary btn-sm">Edit</a>
+                            
+                            {# Remove button #}
+                            <form action="{{url_for('seller.remove_product', product_id=product.id)}}" 
+                                    method="POST">
+                                <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+                                <button type="submit" 
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Remove this product?')">
+                                    Remove
+                                </button>
                             </form>
-                        </td>
-                        <td>
-                            {# Remove product #}
-                            <form action = "{{url_for('seller.remove_product', product_id = product.id)}}" method = "POST" style = "display:inline;">
-                                {# CSRF protection #}
-                                <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
-                                <button type = "submit" onclick = "return confirm('Are you sure you want to remove this product?')">Remove</button>
-                            </form>
-                        </td>
-                        <td>
-                            {# View product detail #}
-                            <a href = "{{url_for('seller.product_detail', product_id = product.id)}}">View product</a>
-                        </td>
+                            
+                            {# View link #}
+                            <a href="{{url_for('seller.product_detail', product_id=product.id)}}" 
+                                class="btn-link-small">View product</a>
+                        </div>
                     </td>
-                {% endfor %}
-            </tr>
+                </tr>
+            {% endfor %}
         </tbody>
 
     </table>

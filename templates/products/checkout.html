@@ -4,7 +4,7 @@
 
 {% block body %} 
 
-<div class = "container">
+<div class = "container mt-2 pd-2">
     <h1>Checkout</h1>
     {% if all_cart_items %}
         <table>
@@ -21,7 +21,7 @@
                 {% for item in all_cart_items %}
                     <tr>
                         <td>
-                            <img src = "{{item.product.image_url}}" alt = "{{item.product.name}}" width = "100">
+                            <img src = "{{url_for('static', filename = item.product.image_path)}}" alt = "{{item.product.name}}" class = "product-thumbnail">
                         </td>
                         <td>{{item.product.name}}</td>
                         <td>{{item.product.price}}</td>
@@ -32,7 +32,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan = "3" style = "text-align: right;"><strong>Total:</strong></td>
+                    <td colspan = "4" style = "text-align: right;"><strong>Total:</strong></td>
                     <td><strong>{{grand_total}}</strong></td>
                     {# <td></td> #}
                 </tr>
@@ -45,8 +45,8 @@
         <input type = "hidden" name = "csrf_token" value = "{{csrf_token()}}">
 
         <label>Delivery Address: </label>
-        <input type = "text" name = "delivery_address" value = "{{current_user.address}}" class = "input-field" required>
-        <button type = "submit">Place Order</button>
+        <input type = "text" name = "delivery_address" value = "{{current_user.address}}" required>
+        <button type = "submit" class = "btn btn-success">Place Order</button>
     </form>
 
 </div>

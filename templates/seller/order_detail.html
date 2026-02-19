@@ -1,78 +1,86 @@
-{% extends 'base.html '%}
+{% extends 'base.html' %}
 
-{% block title %}Order details{% endblock %}
+{% block title %}Order #{{order.id}} - Details{% endblock %}
 
 {% block body %}
-    {# Order ID #}
-    <h4>Order ID: {{order.id}}</h4>
-    {# Customer name #}
-    <h4>Customer name: {{order.user.name}}</h4>
-    {# Date #}
-    <h4>Date: {{order.created_at}}</h4>
-    {# Status #}
-    <h4>Status: {{order.status}}</h4>  
-    {# Revenue #}
-    <h4>Revenue: {{order.total_price}}</h4>
-    {# Delivery address #}
-    <h4>Deliver address: {{order.delivery_address}}</h4>
-    <br>
 
-    {# Allow admin to change order status #}
-    {% if current_user.role == "admin" %}
-        <form action = "{{url_for('admin.change_order_status', order_id = order.id)}}" method = "POST">
-            {# CSRF protection #}
-            <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
-            <select name = "order_status">
-                <option value = "processing">Processing</option>
-                <option value = "fulfilled">Fulfilled</option>
-                <option value = "denied">Denied</option>
-            </select>
-            <button type = "submit" onclick = "return confirm(`Are you sure you want to change the order status? This affects the entire order.`)">Save changes</button>
-        </form>
-    {% endif %}
-
+<div class="container p-2">
+    <h1>Order #{{order.id}}</h1>
     
-    <div class = "container">
-        <h1>Order items</h1>
-        {% if order_items %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Quantity</th>             
-                        <th>Product price at purchase</th>                
-                        <th>Actions</th>                
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in order_items %}
-                        <tr>
-                            <td>{{item.product.name}}</td>
-                            <td>{{item.quantity}}</td>
-                            <td>{{item.product_price_at_purchase}}</td>
-                            <td>
-                                {# View product detail #}
-                                <a href = "{{url_for('seller.order_item_detail', order_id = order.id, order_item_id = item.id)}}">View order item</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan = "4" style = "text-align: right;"><strong>Total:</strong></td>
-                        <td><strong>{{total}}</strong></td>
-                        {# <td></td> #}
-                    </tr>
-                </tfoot>
-            </table>
-        {% endif %}
+    {# Order Information #}
+    <div class="mb-2">
+        <p><strong>Customer:</strong> {{order.user.name}}</p>
+        <p><strong>Order Date:</strong> {{order.created_at.strftime('%Y-%m-%d %H:%M')}}</p>
+        <p><strong>Status:</strong> {{order.status|capitalize}}</p>
+        <p><strong>Total:</strong> £{{order.total_price}}</p>
+        <p><strong>Delivery Address:</strong> {{order.delivery_address}}</p>
     </div>
 
-    {% if current_user.role == "seller"%}
-        <a href = "{{url_for('seller.orders')}}">Return to orders</a>
+    {# Admin Status Change #}
+    {% if current_user.role == "admin" %}
+        <div class="mb-2">
+            <h4>Change Order Status</h4>
+            <form action="{{url_for('admin.change_order_status', order_id=order.id)}}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+                <select name="order_status">
+                    <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>Processing</option>
+                    <option value="fulfilled" {% if order.status == 'fulfilled' %}selected{% endif %}>Fulfilled</option>
+                    <option value="denied" {% if order.status == 'denied' %}selected{% endif %}>Denied</option>
+                </select>
+                <button type="submit" onclick="return confirm('Change order status? This affects the entire order.')">
+                    Update Status
+                </button>
+            </form>
+        </div>
     {% endif %}
-    {% if current_user.role == "admin"%}
-        <a href = "{{url_for('admin.orders')}}">Return to orders</a>
-    {% endif %}
-{% endblock %}
 
+    {# Order Items Table #}
+    <h2>Order Items</h2>
+    {% if order_items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>             
+                    <th>Price at Purchase</th>
+                    <th>Subtotal</th>
+                    <th>Actions</th>                
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                    <tr>
+                        <td>{{item.product.name}}</td>
+                        <td>{{item.quantity}}</td>
+                        <td>£{{item.product_price_at_purchase}}</td>
+                        <td>£{{(item.quantity * item.product_price_at_purchase)|round(2)}}</td>
+                        <td>
+                            <a href="{{url_for('seller.order_item_detail', order_id=order.id, order_item_id=item.id)}}">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
+                    <td colspan="2"><strong>£{{total}}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    {% else %}
+        <p>No items in this order.</p>
+    {% endif %}
+
+    {# Back Button #}
+    <div class="mt-2">
+        {% if current_user.role == "seller" %}
+            <a href="{{url_for('seller.orders')}}" class="btn btn-secondary">Back to Orders</a>
+        {% elif current_user.role == "admin" %}
+            <a href="{{url_for('admin.orders')}}" class="btn btn-secondary">Back to Orders</a>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

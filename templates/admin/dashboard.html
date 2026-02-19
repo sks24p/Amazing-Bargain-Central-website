@@ -4,12 +4,21 @@
 
 {% block body %}
 <div class = "container">
+    <div class = "link-group-v">
+        <a href = "{{url_for('admin.users')}}" class = "btn btn-link">View users</a>
+        <a href = "{{url_for('admin.products')}}" class = "btn btn-link" >View products</a>
+        <a href = "{{url_for('admin.orders')}}" class = "btn btn-link">View orders</a>
+        <a href = "{{url_for('admin.view_logs')}}" class = "btn btn-link"> View logs</a>
+        <a href = "{{url_for('admin.analytics')}}" class = "btn btn-link"> View analytics</a>
 
-    <a href = "{{url_for('admin.users')}}">View users</a>
-    <a href = "{{url_for('admin.products')}}">View products</a>
-    <a href = "{{url_for('admin.orders')}}">View orders</a>
-
-    <a href = "{{url_for('auth.account')}}">View your account settings</a>
-
+        <form action="{{url_for('admin.cleanup_logs')}}" method="POST" onclick="return confirm('Delete all logs older than 90 days?')">
+            <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+            <button type="submit" 
+                    class="btn btn-danger">
+                Cleanup Old Logs +90 days
+            </button>
+        </form>
+        <a href = "{{url_for('auth.account')}}"  class = "btn btn-link">View your account settings</a>
+    </div>
 </div>
 {% endblock %}

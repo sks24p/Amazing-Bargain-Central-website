@@ -3,13 +3,15 @@
 {% block title %}Order Success{% endblock %}
 
 {% block body %}
-<div class = "container">
+<div class = "container mt-1 p-2">
     <h1>Order placed successfully!</h1>
-    <p>Order number: #{{order.id}}</p>
-    <p>Total price: {{order.total_price}}</p>
-    <p>Delivery address: {{order.delivery_address}}</p>
-    <a href = "{{url_for('products.order_detail', order_id = order.id)}}">View order details</a>
-    <a href = "{{url_for('home')}}">Continue shopping</a>
-
+    <p><strong>Order number: </strong>#{{order.id}}</p>
+    <p><strong>Total price: </strong>{{order.total_price}}</p>
+    <p><strong>Delivery address: </strong>{{order.delivery_address}}</p>
+    
+    <div class = "link-group mt-2">
+        <a href = "{{url_for('products.order_detail', order_id = order.id)}}" class = "btn btn-secondary">View order details</a>
+        <a href = "{{url_for('home')}}" class = "btn btn-primary">Continue shopping</a>
+    </div>    
 </div>
 {% endblock %}

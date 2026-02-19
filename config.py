@@ -1,11 +1,15 @@
 from pathlib import Path
+from dotenv import load_dotenv
+import os
 
 class Config:
     BASE_DIR = Path(__file__).resolve().parent
+    load_dotenv()
     # Secret key for session encryption and signing
-    SECRET_KEY = "98WHz4FlyWFGERv4FfaJ"
+    SECRET_KEY = os.getenv('SECRET_KEY')
 
     # Database
+
     # This tells SQLAlchemy where to find/create my database file
     SQLALCHEMY_DATABASE_URI = f'sqlite:///{BASE_DIR / "abc_ecommerce.db"}'
     # This disables a feature that tracks modifications to objects

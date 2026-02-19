@@ -5,7 +5,7 @@ from flask import abort, Blueprint, flash, render_template, request, url_for, re
 from models import Products, Cart_Items, db, Orders, Order_Items, Reviews
 from security import File_Security as FS, Data_Security as DS
 from pathlib import Path
-import markdown, bleach
+from logger import log_event
 
 # Creating Blueprint
 product_bp = Blueprint('products', __name__)
@@ -16,6 +16,8 @@ def product_detail(product_id):
     """Gather a particular product with associated reviews to pass into the product details page"""
     product = Products.query.get_or_404(product_id)
     reviews = Reviews.query.filter_by(product_id = product_id).all()
+    # Log product viewing
+    log_event('product_view', f'{product.name} (ID: {str(product.id)})')
     return render_template("products/detail.html", product = product, reviews = reviews)
 
 @product_bp.route("/search", methods = ['GET'])
@@ -28,6 +30,10 @@ def search():
         ).all()
     else:
         products = list()
+    # Log product searching
+    user_info = current_user.email if current_user.is_authenticated else "Anonymous"
+
+    log_event('product_search', f'User {user_info} searched {search_query} when browsing products')
     return render_template('products/search.html', products = products, query = search_query)
 
 @product_bp.route("/product/<int:product_id>/add-to-cart", methods = ['POST'])
@@ -40,14 +46,20 @@ def add_to_cart(product_id):
         # Validate data
         if not quantity_str:
             flash("This field cannot be left empty.", category = "error")
+            # Log add to cart failure because of Quantity validation
+            log_event('validation_error', f"User {current_user.email} failed to add to cart because of an empty quantity field", severity = "error")
             return redirect(url_for('products.product_detail', product_id = product_id))
         try:
             quantity = int(quantity_str)
         except (ValueError, TypeError):
             flash("Invalid input. Please try again.", category = "error")
+            # Log add to cart failure because of Quantity validation
+            log_event('validation_error', f"User {current_user.email} failed to add to cart because of quantity validation", severity = "error")
             return redirect(url_for('products.product_detail', product_id = product_id))
         if quantity <= 0:
             flash("Quantity must be greater than 0.", category = "error")
+            # Log add to cart failure because of Quantity validation
+            log_event('validation_error', f"User {current_user.email} failed to add to cart because of quantity validation", severity = "error")
             return redirect(url_for('products.product_detail', product_id = product_id))
         # Check if cart item exists
         cart_item_exists = Cart_Items.query.filter_by(user_id = current_user.id, product_id = product_id).first()
@@ -87,6 +99,8 @@ def update_cart_item(cart_item_id):
             new_quantity = int(quantity_str)
         except (ValueError, TypeError):
             flash("Invalid input. Please try again.", category = "error")
+            # Log edit quantity in cart item failure because of Quantity validation
+            log_event('validation_error', f"User {current_user.email} failed to edit quantity of Cart item #{cart_item_id.product.name} because of quantity validation", severity = "error")
             return redirect(url_for('products.view_cart'))
         if new_quantity <= 0:
             flash("Number must be greater than 0.", category = "error")
@@ -172,9 +186,13 @@ def place_order():
                 # After creating order item, delete cart item from cart
                 db.session.delete(item)
             db.session.commit()
+            # Log order created
+            log_event('order_placed', f'User {current_user.email} has created an order with ID #{new_order.id}')
             return redirect(url_for('products.order_success', order_id = new_order.id))
         except Exception as e:
             db.session.rollback()
+            # Log order failure
+            log_event('order_failed', f"User {current_user.email} failed to order", severity = "error")
             print(f"Error: {e}")
             flash("Something went wrong. Please try again.", category = "error")
             return redirect(url_for('products.checkout'))
@@ -214,6 +232,7 @@ def order_detail(order_id):
 @login_required
 def submit_review(product_id):
     if request.method == "POST":
+        product = Products.query.get_or_404(product_id)
         rating_str = request.form.get("rating")
         comment = request.form.get("comment")
         max_comment_length = 1000
@@ -221,19 +240,27 @@ def submit_review(product_id):
             rating = int(rating_str)
         except (ValueError, TypeError):
             flash("Invalid input. Please try again.", category = "error")
+            # Log review submission failure
+            log_event('review_submission_failed', f"User {current_user.email} failed to submit review to {product.name} due to review rating validation", severity = "error")
             return redirect(url_for("products.product_detail", product_id = product_id))
         
         # Check for empty fields
         if not rating:
             flash("Please submit a value from the provided options.", category = "error")
+            # Log review submission failure
+            log_event('review_submission_failed', f"User {current_user.email} failed to submit review to {product.name} due to empty value for rating", severity = "error")
             return redirect(url_for("products.product_detail", product_id = product_id))
         if not comment or not comment.strip():
             flash("Review comment cannot be empty.", category = "error")
+            # Log review submission failure
+            log_event('review_submission_failed', f"User {current_user.email} failed to submit review to {product.name} due to empty comment", severity = "error")
             return redirect(url_for("products.product_detail", product_id = product_id))
         
         # Check if rating value is not between 1 and 5
         if rating < 1 or rating > 5:
             flash("Choose a rating between 1-5.", category = "error")
+            # Log review submission failure
+            log_event('review_submission_failed', f"User {current_user.email} failed to submit review to {product.name} due to review rating not between 1 and 5", severity = "error")
             return redirect(url_for("products.product_detail", product_id = product_id))
         
         # Check if user purchased product
@@ -257,6 +284,10 @@ def submit_review(product_id):
         # Check if comment exceeds 1000 characters
         if len(comment) > max_comment_length:
             flash(f"Reviews cannot exceed {max_comment_length} characters. Please try again.", category = "error")
+            # Log review submission failure
+            log_event('review_submission_failed', 
+                      f"User {current_user.email} failed to submit review to {product.name} due to comment exceeding 1000 characters", 
+                      severity = "error")
             return redirect(url_for("products.product_detail", product_id = product_id))
         
         # Sanitising comment and converting it to markdown format
@@ -288,10 +319,14 @@ def submit_review(product_id):
                 image_path = f"uploads/reviews/{secure_filename}"                
             except ValueError as e:
                 flash(str(e), category="error")
+                # Log review submission failure
+                log_event('review_submission_failed', f"User {current_user.email} failed to submit review to {product.name} due to ValueError for image validation", severity = "error")
                 return redirect(url_for("products.product_detail", product_id=product_id))
             except Exception as e:
                 print(f"Error saving file: {e}")
                 flash("Error uploading image. Please try again.", category = "error")
+                # Log review submission failure
+                log_event('review_submission_failed', f"User {current_user.email} failed to submit review to {product.name} due to image validation", severity = "error")
                 return redirect(url_for("products.product_detail", product_id=product_id))
         new_review = Reviews(
             user_id = current_user.id,
@@ -302,6 +337,9 @@ def submit_review(product_id):
         )
         db.session.add(new_review)
         db.session.commit()
+        # Log review submission
+        product = Products.query.get_or_404(product_id)
+        log_event('review_submitted', f"User {current_user.email} submitted a review to Product: {product.name}")
         flash("Review submitted!", category = "success")
         return redirect(url_for("products.product_detail", product_id = product_id))
 

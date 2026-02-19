@@ -2,12 +2,17 @@ from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
 from config import Config
-from models import db, Users, Products, Orders, Order_Items, Reviews
-from flask_login import LoginManager
+from models import db, Users, Products
+from flask_login import LoginManager, current_user
+from logger import log_event
+from flask_talisman import Talisman
 
 # Create app instance
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# Secure HTTP to HTTPS
+Talisman(app,force_https=True)
 
 # Import blueprints
 from blueprints.auth import auth_bp
@@ -51,12 +56,24 @@ def handle_csrf_error(e):
 
 @app.errorhandler(403)
 def forbidden(error):
+    # Log 403 error from user
+    log_event('403_application_error', f"User {current_user.email} encountered a 403 error", severity = "error")
     return render_template("errors/403.html"), 403
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template("errors/404.html"), 404
 
+    # Don't log or respond to browser automatic requests
+    ignore_paths = ['/favicon.ico', '/.well-known/appspecific/com.chrome.devtools.json']
+    
+    if request.path in ignore_paths:
+        return '', 204  # Just return nothing - no log created!
+
+    # Log 404 error from user
+    log_event('404_application_error', 
+              f"Path: {request.path}, User: {current_user.email if current_user.is_authenticated else "Anonymous"}", 
+              severity = "warning")
+    return render_template("errors/404.html"), 404
 
 # Routes
 @app.route("/home")
