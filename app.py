@@ -6,13 +6,35 @@ from models import db, Users, Products
 from flask_login import LoginManager, current_user
 from logger import log_event
 from flask_talisman import Talisman
+from dotenv import load_dotenv
+import os
 
 # Create app instance
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Remove server header
+@app.after_request
+def security_headers(response):
+    response.headers.pop('Server', None)
+
+csp = {
+    'default-src': "'self'",
+    'script-src': "'self'",
+    'style-src': "'self'",
+    'img-src': "'self' data:",
+    'font-src': "'self'",
+    'connect-src': "'self'",
+    'frame-ancestors': "'none'"
+
+}
+
 # Secure HTTP to HTTPS
-Talisman(app,force_https=True)
+Talisman(app,
+    force_https=True,
+    content_security_policy=csp,
+    strict_transport_security=True,
+)
 
 # Import blueprints
 from blueprints.auth import auth_bp
@@ -71,7 +93,7 @@ def page_not_found(error):
 
     # Log 404 error from user
     log_event('404_application_error', 
-              f"Path: {request.path}, User: {current_user.email if current_user.is_authenticated else "Anonymous"}", 
+              f"Path: {request.path}, User: {current_user.email if current_user.is_authenticated else 'Anonymous'}", 
               severity = "warning")
     return render_template("errors/404.html"), 404
 
@@ -85,4 +107,8 @@ def home():
 
 
 if __name__ == '__main__':
-    app.run(debug = True)
+    # Debug mode controlled by environment variable
+    # Never set debug=True in production
+    # Defaults to False for security
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug = debug_mode)
