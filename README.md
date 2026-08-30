@@ -37,7 +37,7 @@ This platform enables customers to browse and purchase products, sellers to mana
 
 1. **Clone the repository:**
 ```bash
-   git clone https://github.coventry.ac.uk/ahmedkhans/amazing-bargain-central.git
+   git clone https://github.com/sks24p/Amazing-Bargain-Central-website.git
    cd abc-ecommerce
 ```
 
